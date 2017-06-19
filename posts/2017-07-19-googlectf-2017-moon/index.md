@@ -74,7 +74,7 @@ Brief pause:
 Inside `sub_401BF0` we attempted to locate where the data copied to the hash pointer `v41` was coming from. It was being copied from another buffer at address `0000000007478000` (in that particular execution) which looked "quite suspicious" due to following reasons:
 
 1. Hardware breakpoints on memory accesses were not working.
-2. This buffer was filled, right after calling functions from my GPU driver libraries (in my case `ig9icd64.dll`), most likely OpenGL implementation.
+2. This buffer was filled right after calling functions from my GPU driver libraries (in my case `ig9icd64.dll`), most likely just its OpenGL implementation.
 
 ```
                    0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F  0123456789ABCDEF
@@ -86,20 +86,20 @@ Inside `sub_401BF0` we attempted to locate where the data copied to the hash poi
 ...
 ```
 
-We suspect GPGPU is coming into play and that compute shaders might be responsible for generating the hash from the password.
+We suspect GPGPU is coming into play and that compute shaders might be responsible for generating the hash.
 
 
 ## Extracting compute shaders
 
-Looking at the executable strings, it's clear that no compute shader is visible as plaintext. However, rather than inspecting of the many functions is responsible of decrypting the GLSL source, or trying to locate it somewhere within the user address space. We fetch it from where the application could never hide it: the GPU driver libraries.
+Looking at the strings in the executable, it's clear that no compute shader is visible as plaintext. However, rather than inspecting which of the many functions is responsible of decrypting the GLSL source, or trying to locate it somewhere within the user address space. We fetch it from where the application could never hide it: the GPU driver libraries.
 
 For that purpose we use [Apitrace](http://apitrace.github.io/). We spawn *moon.exe* with it, in *OpenGL* mode, fill out a dummy password, close the application and proceed to inspect the list of captured frames. From the long list of frames, most with 1027 calls, we notice one with 1041 calls. As expected, the small difference here is that the application maps shader storage buffer and fills it with `GL_COMPUTE_SHADER` data.
 
 ![](apitrace.png)
 
-Apitrace provides us the application-supplied source code for the mapped shader, which we auto-formatted for readability reasons. You can read the entire GLSL source code at: [moon.glsl](moon.glsl). The source code speaks for itself and explains the meaning behind the buffers in `sub_401BF0`.
+Apitrace provides us the application-supplied source code for the mapped shader, which we auto-formatted for readability reasons. You can read the entire GLSL source code at: [moon.glsl](moon.glsl).
 
-Next, we will discuss the most important sections. Firstly, we observed the inputs/outputs for this shader:
+Next, we will discuss the most important parts of the shader. Firstly, we observed the following input/output buffers:
 
 ```glsl
 layout(std430, binding = 0) buffer shaderExchangeProtocol {
@@ -112,78 +112,78 @@ layout(std430, binding = 0) buffer shaderExchangeProtocol {
 The meaning of `password` is clear from the context. Inspecting the GLSL code we notice that every invocation of the shader results in a `uint32_t` value being updated in `hash[idx]`. Similarly, the value `state[idx]` changes from 1 to 2 to mark that particular task as finished.
 
 ```glsl
-  if ((idx & 1) == 0) {
-    final = hash_alpha(password[idx / 2]);
-  } else {
-    final = hash_beta(password[idx / 2]);
-  }
+if ((idx & 1) == 0) {
+  final = hash_alpha(password[idx / 2]);
+} else {
+  final = hash_beta(password[idx / 2]);
+}
 ```
 
-For every character in `password`, two different hashes are computed, `hash_alpha` and `hash_beta`, each resulting in a `uint32_t` value that is stored in the `hash` buffer after XOR'ing it further.
+For every character in `password`, two different hashes are computed, `hash_alpha` and `hash_beta`, each resulting in a `uint32_t` value that is stored in the `hash` buffer after XOR'ing it further. More details on these operations will be given in the following paragraphs.
 
-Our goal now is to recover the password from the expected hash. Here we noticed two possible approaches, a quick one (which we used in the CTF), and a more elegant one.
+Our goal now is to recover the password from the expected hash. Here we noticed two possible approaches, a quick one (which we used in the CTF), and a more elegant one (for the sake of perfectionism and pleasing mathematicians).
 
 
-## Hacker's approach
+## Strategy #1: The Hacker's Approach
 
-Every invocation of the compute shader takes into account a single character of the password in order to generate a `uint32_t` value of the hash, except for the following final part that interates over the whole password:
+Every invocation of the compute shader takes into account a **single character** of the password in order to generate a `uint32_t` value of the hash, except for the final part that interates over the whole password:
 
 ```glsl
-  uint h = 0x5a;
-  for (i = 0; i < 32; i++) {
-    uint p = password[i];
-    uint r = (i * 3) & 7;
-    p = (p << r) | (p >> (8 - r));
-    p &= 0xff;
-    h ^= p;
-  }
-  final ^= (h | (h << 8) | (h << 16) | (h << 24));
+uint h = 0x5a;
+for (i = 0; i < 32; i++) {
+  uint p = password[i];
+  uint r = (i * 3) & 7;
+  p = (p << r) | (p >> (8 - r));
+  p &= 0xff;
+  h ^= p;
+}
+final ^= (h | (h << 8) | (h << 16) | (h << 24));
 ```
 
 However, since `p` is always masked with 0xFF, `h` will be in range [0x00, 0xFF]. Thus, there are only 256 possible values with which the `final` variable could be XOR'ed (e.g. `01010101`, `02020202`, etc.). This can be bruteforced by iterating over every possible value of `h`.
 
-* __Clever bruteforcer__: For every position `i` in the password, we try character `c` and temporarily set `password[i] = c`. We calculate the first of the two resulting `uint32_t` hash values (we don't need the second one!) and, as described before, we XOR the result with every of the 256 possible values with which `final` could be XOR'ed. If there's a match, we keep the character `c` and move on with the next `i`.
+* __Bruteforcing algorithm__: For every position `i` in the password, we try character `c` and temporarily set `password[i] = c`. We calculate the first of the two resulting `uint32_t` hash values (we don't need the second one!) and, as described before, we XOR the result with every of the 256 possible values with which `final` could be XOR'ed. If there's a match, we keep the character `c` and move on with the next `i`.
 
 Considering a 32-byte password and 256 choices for each `c` and `h`, we get the following worst case scenario: 32 * 256 * 256 = 2097152 attempts.
 
-We could reimplement the whole algorithm, which would certainly save computing time. But on a CTF, it's *our* time the one that matters. To solve the challenge as quick as possible time we used [Frida](https://www.frida.re/) to instrument *moon.exe*, and automatically execute the function `sub_401BF0` for arbitrary passwords. You can find the source code at [bruteforcer.py](bruteforcer.py).
+We could reimplement the whole algorithm again, which would certainly save computing time. But on a CTF, it's *our* time the one that matters. To solve the challenge as quick as possible time we used [Frida](https://www.frida.re/) to instrument *moon.exe*, and automatically execute the function `sub_401BF0` for arbitrary passwords. You can find the source code at [bruteforcer.py](bruteforcer.py).
 
 
-To explain the code briefly: We allocate the buffers that will hold both the password and hash. We will pass them as arguments to the *keygen* function (aka. `sub_401BF0`), which is transformed into a `NativeFunction` to be invocated later directly from our code.
+To explain the code briefly: We allocate the buffers that will hold both the password and hash. We will pass them as arguments to the *hashgen* function (aka. `sub_401BF0`), which is transformed into a `NativeFunction` to be invocated later directly from our code.
 
 ```javascript
 // Buffers 
 var pswd_ptr = Memory.alloc(0x20);
 var hash_ptr = Memory.alloc(0x400);
 
-var keygen_ptr = new NativePointer(0x401BF0);
-var keygen = new NativeFunction(keygen_ptr, 'int', ['pointer', 'pointer']);
+var hashgen_ptr = new NativePointer(0x401BF0);
+var hashgen = new NativeFunction(keygen_ptr, 'int', ['pointer', 'pointer']);
 ```
 
-Then, for every choice of `i`, `c`, `h`, we have the following block of code, deep within the nested main loops.
+Then, for every choice of `i`, `c`, `h`, we have the following block of code (i.e. deep within three nested loops).
 
 ```javascript
-var maskh = mask(h | (h << 8) | (h << 16) | (h << 24));
+var maskh = to_uint32(h | (h << 8) | (h << 16) | (h << 24));
 Memory.writeU8(pswd_ptr.add(i), c);
 keygen(pswd_ptr, hash_ptr);
 var dword = Memory.readU32(hash_ptr.add(8*i)) ^ maskh;
-if (mask(dword) == mask(expected[2*i])) {
+if (to_uint32(dword) == to_uint32(expected[2*i])) {
   valid = true;
   break;
 }
 ```
 
-After 1 minute of computeing time we obtain the following output:
+After around 1 minute of computing time we obtain the following output. Challenge solved!
 
 ```
-           0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F  0123456789ABCDEF
-00000000  43 54 46 7b 4f 70 65 6e 47 4c 4d 6f 6f 6e 4d 6f  CTF{OpenGLMoonMo
-00000010  6f 6e 47 30 65 73 54 30 54 68 65 4d 6f 6f 6e 7d  onG0esT0TheMoon}
+CTF{OpenGLMoonMoonG0esT0TheMoon}
 ```
 
-Thus, we obtain the flag: `CTF{OpenGLMoonMoonG0esT0TheMoon}`.
+Small addendum:
+* Note that we didn't need to understand what `hash_alpha` and `hash_beta` were doing. We recovered the entire password just by cleverly bruteforcing over (half of!) the expected hash buffer entries.
+* We are aware that `h` does not need to be bruteforced again for `i > 0` and by restricting ourselves to printable choices of `c` we could bring the worst case scenario down to: 32 * (0x7E - 0x20 + 1) + 256 = 3264 attempts (x100 speedup). However, the naive approach was fast enough for us.
 
 
-## Mathematician's approach
+## Strategy #2: The Mathematician's Approach
 
 (Soon...)

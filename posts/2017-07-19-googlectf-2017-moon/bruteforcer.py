@@ -10,7 +10,7 @@ var hash_ptr = Memory.alloc(0x400);
 var keygen_ptr = new NativePointer(0x401BF0);
 var keygen = new NativeFunction(keygen_ptr, 'int', ['pointer', 'pointer']);
 
-var t = [
+var expected = [
     0x30c7ead9, 0x71077759,
     0x69be4ba0, 0x0cf5578f,
     0x1048ab13, 0x75113631,
@@ -42,9 +42,12 @@ var t = [
     0x9a80ebe0, 0xb61a7974,
     0x1888cb62, 0x341259f6,
     0x2848aad4, 0x4df2b809,
-    0x383e0943, 0x7928980f];
+    0x383e0943, 0x7928980f
+];
 
-function mask(n) { return (n + 0x100000000) & 0xFFFFFFFF; }
+function to_uint32(n) {
+    return (n + 0x100000000) & 0xFFFFFFFF;
+}
 
 Interceptor.attach(keygen_ptr, {
     onEnter: function (args) {
@@ -53,12 +56,11 @@ Interceptor.attach(keygen_ptr, {
             for (var c = 0; c < 0x100; c++) {
                 var valid = false;
                 for (var h = 0; h < 0x100; h++) {
-                    var maskh = mask(h | (h << 8) | (h << 16) | (h << 24));
+                    var maskh = to_uint32(h | (h << 8) | (h << 16) | (h << 24));
                     Memory.writeU8(pswd_ptr.add(i), c);
                     keygen(pswd_ptr, hash_ptr);
-                    var dword = Memory.readU32(hash_ptr.add(8*i));
-                    dword ^= maskh;
-                    if (mask(dword) == mask(t[2*i])) {
+                    var dword = Memory.readU32(hash_ptr.add(8*i)) ^ maskh;
+                    if (to_uint32(dword) == to_uint32(expected[2*i])) {
                         valid = true;
                         break;
                     }
@@ -67,6 +69,7 @@ Interceptor.attach(keygen_ptr, {
             }
         }
         console.log(hexdump(pswd_ptr, {length: 32}));
+        console.log(Memory.readUtf8String(pswd_ptr, 32));
     }
 });
 """
@@ -77,7 +80,6 @@ def on_message(message, data):
 pid = frida.spawn(['moon/moon.exe'])
 frida.resume(pid)
 
-time.sleep(2)
 session = frida.attach(pid)
 script = session.create_script(code)
 script.on('message', on_message)

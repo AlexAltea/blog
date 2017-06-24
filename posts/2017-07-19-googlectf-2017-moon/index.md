@@ -4,7 +4,7 @@ date: 2017-06-19 00:00:00 UTC
 title: GoogleCTF 2017 Reversing/Moon writeup
 ---
 
-Last weekend I participated on the [Google CTF 2017](https://capturetheflag.withgoogle.com/) with as part of the  glorious team "*63 7c 77 7b f2 6b 6f c5 30 01 67 2b fe d7 ab 76*" composed of [AlexF0rtune](https://twitter.com/AlexF0rtune) and me. Among the many tough and fun challenges that we attempted, and the few ones that we actually solved, *moon* was certainly the most entertaining one for me, so I decided to prepare a writeup of my solution.
+Last weekend I participated on the [Google CTF 2017](https://capturetheflag.withgoogle.com/) as part of the glorious team "*63 7c 77 7b f2 6b 6f c5 30 01 67 2b fe d7 ab 76*" composed of [AlexF0rtune](https://twitter.com/AlexF0rtune) and me. Among the many tough and fun challenges that we attempted, and the few ones that we actually solved, *moon* was certainly the most entertaining one for me, so I decided to prepare a writeup of my solution.
 
 The problem simply states:
 
@@ -66,7 +66,7 @@ if ((unsigned __int8)sub_401BF0(qword_4CA080, (unsigned __int64)&v41)) {
 }
 ```
 
-This buffer pointed by `v41` contains the raw bytes of the hash. This is hash is updated by the function `sub_401BF0(const char* password, char* hash)` every time the user-supplied password reaches 32 characters in length.
+This buffer pointed by `v41` contains the raw bytes of the hash. This hash is updated by the function `sub_401BF0(const char* password, char* hash)` every time the user-supplied password reaches 32 characters in length.
 
 Brief pause:
 > As you see, instead of reverse engineering entire functions and then making sense of the code, our approach could be described as doing inverse data-taining manually and reverse engineering only the necessary bits along the way.
@@ -239,8 +239,8 @@ For the final part, as mentioned in the previous section, we could try bruteforc
 Putting all together, for some `h`, the steps to recover the password character at index `i`, given corresponding hashes *A* and *B* are as follow:
 1. Revert the XORs in `main` for *A* and *B*. 
 2. Revert the XOR in `extend` for *A* and *B*.
-3. Compute `X = A ^ 0x5F208C26` and `Y = B ^ 0x5F208C26`.
-4. Compute `c = deg(atan2((y-2048.)/1024., (x-2048.)/1024.)`
+3. Compute `X = (A ^ 0x5F208C26) & 0x7FFF` and `Y = (B ^ 0x5F208C26) & 0x7FFF`.
+4. Compute `c = deg(atan2((Y-2048)/1024, (X-2048)/1024)`.
 5. Set `password[i] = c`.
 
 Once again, challenge solved!

@@ -172,8 +172,6 @@ else
 
 Note that `rax` is also negated as a side-effect.
 
-*TODO: Not sure if there's anything else special about this.*
-
 
 ### Snippet 0x0C
 
@@ -260,8 +258,7 @@ rsi[3] ^= rsi[2]
 ...
 ```
 
-*TODO: Not sure if there's anything else special about this.*
-
+This resembles a 8-bit CBC encryption scheme using `al` as IV, except for the fact that it uses the identity function as block cipher encryption instead of a pseudorandom function.
 
 ### Snippet 0x10
 
@@ -298,9 +295,7 @@ Different ways of swapping the contents of `rax` and `rcx`.
     loop     .loop
 ```
 
-Compares two strings `rsi` and `rdi`. If the register `rax` is zero-initialized, it will remain as *0* unless the strings differ.
-
-*TODO: Not sure if there's anything else special about this.*
+Compares two buffers `rsi` and `rdi` of length `rcx`. Assuming `al` is zero-initialized, it will remain as *0* unless the buffers differ.
 
 
 ### Snippet 0x12
@@ -401,11 +396,9 @@ Computes the absolute value of `rax`, i.e. `rax := abs(rax)`.
     cmp      rcx,rax
 ```
 
-Compares two timestamps.
+Compares two consecutively obtained timestamps.
 
-The instruction `rdtsc` stores the current 64-bit timestamp counter value in `edx:eax`, while the `shl` and `or` instructions aggregate the halves of each register into `rax`.
-
-*TODO: Not sure if there's anything else special about this.*
+The instruction `rdtsc` stores the current 64-bit timestamp counter value in `edx:eax`, while the `shl` and `or` instructions aggregate the halves of each register into `rax`. Trivially, the second timestamp will always be larger than the first one.
 
 
 ### Snippet 0x19
@@ -451,8 +444,6 @@ Indirect branch to `rax`. Since there's no immediate arguments to cause further 
 ```
 
 Swaps the stack pointer with the address at the top of the current stack.
-
-*TODO: Not sure if there's anything else special about this.*
 
 
 ### Snippet 0x1D
@@ -541,7 +532,7 @@ rbx := rax * rdx + rbx * rcx
 ```
 
 This corresponds to the multiplication of two complex numbers:
-(a + bi) * (c + di) = (ac - bd) + (ad + bc)i
+(a + bi) * (c + di) = (ac - bd) + (ad + bc)i.
 
 
 ### Snippet 0x22
@@ -576,9 +567,7 @@ Computes `rax := rax / 3` rounding to the closest integer.
     sub      rax,rdx
 ```
 
-Seems to compute `rax := rax % 3`.
-
-*TODO: It's absolutely not clear to me why this is the case. I deduced this result by plugging different values of `rax`.*
+Computes `rax := rax % 3`.
 
 
 ### Snippet 0x24

@@ -260,6 +260,7 @@ rsi[3] ^= rsi[2]
 
 This resembles a 8-bit CBC encryption scheme using `al` as IV, except for the fact that it uses the identity function as block cipher encryption instead of a pseudorandom function.
 
+
 ### Snippet 0x10
 
 ```asm
@@ -589,7 +590,7 @@ Computes `rax := rax % 3`.
 .exit_loop:
 ```
 
-*TODO: No idea about this one.*
+Computes `rcx := rax % 2`.
 
 
 ### Snippet 0x25
@@ -614,7 +615,16 @@ Computes `rax := rax % 3`.
     loop     .loop
 ```
 
-*TODO: No idea about this one.*
+Register `rax` acts as a counter, and `rcx` loops from 0x100000000 to 0x0. Each iteration will split the `ecx` values in two 16-bit halves, *x* and *y*, and verify the following property:
+```
+(x*x + y*y) >> 20 == 1
+```
+
+Since *x* and *y* are each 16-bit, `x*x + y*y` must be in range *[0x0, 0x1FFFC0002]*, thus `(x*x + y*y) >> 20` must be either 0 or 1. Therefore, each iteration is actually verifying that: `x*x + y*y >= 0x100000000`. This is equivalent to *x^2 + y^2 >= 0x10000^2*.
+
+Since *(x,y)* iterate each in range *[0x0000, 0xFFFF]* as `rcx` decreases. The value stored in `rax` after the snippet has been executed will be the number of points in *[0, 65535]^2* lying outside the circumference of radius 65536 centered at the origin.
+
+This ratio of points will be *1 - pi/4*, yielding an expected value of `rax := 0x100000000 * (1 - pi/4)`.
 
 
 ### Snippet 0x26
@@ -641,7 +651,11 @@ Rotates the value in the `rax` register 7 bits to the right. Equivalent to `ror 
     shr      rax,cl
 ```
 
-*TODO: No idea about this one.*
+This computes: `rax := rax >> ((cl >> 1) + ((cl + 1) >> 1))` which is equivalent to `rax := rax / 2**T(cl)`, where *T(n) := n(n+1)/2* represents the *n*-th [triangular number](https://en.wikipedia.org/wiki/Triangular_number).
+
+The denominator in the expression above corresponds to the sequence [A006125](https://oeis.org/A006125) as `cl` increases.
+
+*TODO: Is there anything else special about this snippet?*
 
 
 ### Snippet 0x28
@@ -654,7 +668,7 @@ Rotates the value in the `rax` register 7 bits to the right. Equivalent to `ror 
     loop     .loop
 ```
 
-*TODO: No idea about this one.*
+Left-shifts by one an entire buffer at `rsi` with a length of `rcx` bytes. This can also be interpreted as left-shifting by one, i.e. dividing by two, an **arbitrarily long** big-endian `8*rcx`-bit integer at `rsi`.
 
 
 ### Snippet 0x29
@@ -664,7 +678,9 @@ Rotates the value in the `rax` register 7 bits to the right. Equivalent to `ror 
     rep movsb
 ```
 
-*TODO: No idea about this one.*
+Repeats the first 3 bytes at `rsi` starting from offset `rsi+3` until `rcx` bytes have been written.
+
+This could be used to fill a texture of 24-bit pixels with a constant color stored in the first pixel of the buffer. In this case, the first 3 bytes would be written, and then the snippet would be executed with `rcx := 3 * width * height - 3`.
 
 
 ### Snippet 0x2A

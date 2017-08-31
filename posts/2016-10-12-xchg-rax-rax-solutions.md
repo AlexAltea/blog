@@ -902,7 +902,7 @@ This could be used to fill a texture of 24-bit pixels with a constant color stor
     or       eax,ecx
 ```
 
-*TODO: No idea about this one.*
+The snippet is made of five blocks, each aggregating and adding pairs of consecutive ranges of adjacent bits from the `rax` register. The size of this ranges in each block are respectively: 1, 2, 4, 8 and 16 bits.
 
 
 ### Snippet 0x35
@@ -939,8 +939,7 @@ This could be used to fill a texture of 24-bit pixels with a constant color stor
     add      eax,edx
 ```
 
-*TODO: No idea about this one.*
-
+The snippet is made of five blocks, each aggregating and adding pairs of consecutive ranges of adjacent bits from the `rax` register. The size of this ranges in each block are respectively: 1, 2, 4, 8 and 16 bits.
 
 ### Snippet 0x36
 
@@ -974,10 +973,12 @@ This could be used to fill a texture of 24-bit pixels with a constant color stor
     inc      rax
 ```
 
-*TODO: No idea about this one.*
+Maps positive values in `rax` to their next power of two, or itself if already a power of two. Non-positive values get mapped to 0.
+
+This works by decreasing the number and replicating the most-significant non-zero bits to all their relatively least-significant bits, resulting in a value of the form *2^N - 1*. Finally, the number is incremented to obtain the desired power of two.
 
 
-### Snippet 0x36
+### Snippet 0x37
 
 ```asm
     mov      rdx,rax
@@ -989,7 +990,23 @@ This could be used to fill a texture of 24-bit pixels with a constant color stor
     and      rax,rdx
 ```
 
-*TODO: No idea about this one.*
+The goal seems to be replacing each byte in the `rax` register with 0x00 if non-zero, or with 0x80 if zero. For instance:
+```
+0102030400000000 => 8080808000000000
+0500060007000800 => 8000800080008000
+0000FFFE00000102 => 0000808000008080
+...
+```
+
+However, 0x01 bytes followed exclusively by 0x00 or 0x01 bytes to their right are an exception and will be replaced with 0x80 as well, since substracting both the carried bit and the 0x01 byte will turn them into a negative byte. For instance:
+```
+0100000000000000 => 8080808080808080
+0101000000000000 => 8080808080808080
+FF01010000000000 => 0080808080808080
+...
+```
+
+*TODO: It's not clear whether this is a bug, or a feature.*
 
 
 ### Snippet 0x38

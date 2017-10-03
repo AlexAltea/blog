@@ -695,7 +695,9 @@ This could be used to fill a texture of 24-bit pixels with a constant color stor
     loop     .loop
 ```
 
-*TODO: No idea about this one.*
+This moves the last element of the array of `rcx` keywords pointed by `rbx` to the front.
+
+For instance, let `rcx :=  4` and `rbx` point to *[Q0, Q1, Q2, Q3, Q4]* with quadwords *Qi*. Then, after executing this snippet the contents of `rbx` will be: *[Q4, Q0, Q1, Q2, Q3]*.
 
 
 ### Snippet 0x2B
@@ -722,7 +724,25 @@ This could be used to fill a texture of 24-bit pixels with a constant color stor
     jnz      .loop2
 ```
 
-*TODO: No idea about this one.*
+This snippet expects `rbx` pointing to a table of 256 `uint8_t` entries, each containing an index to the next element thus forming a linked list. The first loop can be represented by the following expression:
+
+```cpp
+unsigned char i = 0;
+while (rbx[i] != rbx[rbx[i]]) {
+  i = rbx[i];
+}
+```
+
+This will traverse the linked list and find the first entry pointing to itself. Obviously, this relies in the assumption that no table entry points to an index occurring previously in the chain as this would result in an endless loop (similar to cycles in linked lists). To prevent this scenario, this table pointed by `rbx` should have been initialized by `rbx[i] = i` for *i* in *[0, 255]*. The second loop can be represented by the following expression:
+
+```cpp
+unsigned char j = 0;
+while (rbx[j] != rbx[i]) {
+  j = rbx[j];
+}
+```
+
+Since `i == rbx[i]`, this loop will necessarily terminate and the linked list will be traversed again until the last element is reached. 
 
 
 ### Snippet 0x2C
@@ -737,7 +757,7 @@ This could be used to fill a texture of 24-bit pixels with a constant color stor
     mov      rax,qword [rbx + 8*rax]
 ```
 
-*TODO: No idea about this one.*
+This will move `rsi` or `rdi` into `rax` depending on whether `rcx` and `rdx` are different or not, respectively. This is equivalent to: `rax := (rcx == rdx) ? rdi : rsi`. This assumes that all `rbx`-relative offsets point to valid memory.
 
 
 ### Snippet 0x2D
@@ -748,7 +768,7 @@ This could be used to fill a texture of 24-bit pixels with a constant color stor
     and      rax,rdx
 ```
 
-*TODO: No idea about this one.*
+Determines if `rax` is a power of two by computing `rax := rax & (rax - 1)`. The result will be zero if and only if `rax` is a power of two.
 
 
 ### Snippet 0x2E
@@ -761,7 +781,9 @@ This could be used to fill a texture of 24-bit pixels with a constant color stor
     cmp      rax,rdx
 ```
 
-*TODO: No idea about this one.*
+Determines if `rax` is a power of two larger than zero by comparing `(rax ^ (rax - 1)) >> 1` and `rax - 1`. Both values will be equal if and only if `rax` is a power of two larger than zero. Note that the case `rax == 0` will result on different values due to the right-shift operation.
+
+See also: Snippet 0x2D.
 
 
 ### Snippet 0x2F
@@ -778,7 +800,9 @@ This could be used to fill a texture of 24-bit pixels with a constant color stor
 .exit_loop:
 ```
 
-*TODO: No idea about this one.*
+This snippet stores the number of `1`-bits in `rcx` into the `rax` register. This relies on the trick features in *Snippet 0x2D* to clear the rightmost `1`-bit until `rcx` is zero.
+
+See also: Snippet 0x2D.
 
 
 ### Snippet 0x30
@@ -793,7 +817,7 @@ This could be used to fill a texture of 24-bit pixels with a constant color stor
     and      rax,rdx
 ```
 
-*TODO: No idea about this one.*
+This snippet computes `((((rax & rdx) - rdx) & rdx) - 1) & rdx`. This expression is equivalent to `rax & rdx`.
 
 
 ### Snippet 0x31
@@ -812,7 +836,7 @@ This could be used to fill a texture of 24-bit pixels with a constant color stor
     xor      rdx,rcx
 ```
 
-*TODO: No idea about this one.*
+Finds the highest power of two dividing `rax + 1` by computing: `((rax >> 1) ^ rax) ^ (((rax + 1) >> 1) ^ (rax + 1))`. This corresponds to the sequence: [A006519](https://oeis.org/A006519) as `rax` increases.
 
 
 ### Snippet 0x32
@@ -940,6 +964,9 @@ The snippet is made of five blocks, each aggregating and adding pairs of consecu
 ```
 
 The snippet is made of five blocks, each aggregating and adding pairs of consecutive ranges of adjacent bits from the `rax` register. The size of this ranges in each block are respectively: 1, 2, 4, 8 and 16 bits.
+
+See also: Snippet 0x34.
+
 
 ### Snippet 0x36
 

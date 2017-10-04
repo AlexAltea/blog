@@ -374,6 +374,23 @@ Note that this requires the 32 most significant bits in `rax` to be cleared.
     cmp      rax,rsi
 ```
 
+Computes the following:
+```
+rsi := (rax ^ rbx) + (rbx ^ rcx)
+if (overflew(rsi))
+    rax := 0
+else
+    rax := rax ^ rcx
+cmp(rax, rsi)
+```
+
+Observations:
+- If `rax` == `rbx`: No overflow.
+- If `rcx` == `rbx`: No overflow.
+- If `rax` == `~rbx`: Always overflows, except when `rbx` == `rcx`.
+- If `rbx` == `rax|rcx`: No overflow.
+- If `rbx` == `rax&rcx`: No overflow.
+
 *TODO: No idea about this one.*
 
 
@@ -1090,7 +1107,7 @@ FF01010000000000 => 0080808080808080
 
 Computes the negabinary representation of `rax`.
 
-Instead of having the binary basis *(+1, +2, +4, +8, +16, +32, ...)*, negabinary numbers have the basis *(+1, -2, +4, -8, +16, -32, ...)*. For instance, the number *3* (i.e. 0b11) gets mapped into 0b111 (i.e. 7) T *3 = 4 - 2 + 1*.
+Instead of having the binary basis *(+1, +2, +4, +8, +16, +32, ...)*, negabinary numbers have the basis *(+1, -2, +4, -8, +16, -32, ...)*. For instance, the number *3* (i.e. 0b11) gets mapped into 0b111 (i.e. 7) since *3 = 4 - 2 + 1*.
 
 
 ### Snippet 0x3A
@@ -1227,6 +1244,15 @@ Computes the direction of the lines in the (Heighway) Dragon Curve by computing 
     and      rdi,rdx
 
     bsf      rax,r8
+```
+
+This snippet computes:
+
+```
+rsi = ((rax & (rax - 1)) % 3)
+rdx = ((rax | (rax - 1)) % 3) + 1
+rdi = (rdx == 3) ? 0 : rdx;
+rax = bsf(rax)
 ```
 
 *TODO: No idea about this one.*

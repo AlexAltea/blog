@@ -9,6 +9,12 @@ title: Solutions of xchg rax,rax
 In words of *xorpd*, the author of `xchg rax,rax`:
 
 > `xchg rax,rax` is a collection of assembly gems and riddles I found over many years of reversing and writing assembly code. The book contains 0x40 short assembly snippets, each built to teach you one concept about assembly, math or life in general.
+>
+> Be warned - This book is not for beginners. It doesn't contain anything besides assembly code, and therefore some x86_64 assembly knowledge is required.
+>
+> How to use this book? Get an assembler (Yasm or Nasm is recommended), and obtain the x86_64 instruction set. Then for every snippet, try to understand what it does. Try to run it with different inputs if you don't understand it in the beginning. Look up for instructions you don't fully know in the Instruction sets PDF. Start from the beginning. The order has meaning.
+>
+> As a final note, the full contents of the book could be viewed for free on my website (Just google "xchg rax,rax").
 
 The original release, which can be read online at [1], contains no official solutions, and some of the snippets doesn't even seem to yield a clearly defined "answer". Also, in his own words:
 
@@ -836,7 +842,7 @@ This snippet computes `((((rax & rdx) - rdx) & rdx) - 1) & rdx`. This expression
     xor      rdx,rcx
 ```
 
-Finds the highest power of two dividing `rax + 1` by computing: `((rax >> 1) ^ rax) ^ (((rax + 1) >> 1) ^ (rax + 1))`. This corresponds to the sequence: [A006519](https://oeis.org/A006519) as `rax` increases.
+Finds the highest power of two dividing `rax + 1` by computing: `((rax >> 1) ^ rax) ^ (((rax + 1) >> 1) ^ (rax + 1))`. This corresponds to the sequence: [A006519](https://oeis.org/A006519) as `rax` increases. The first terms are: 1, 2, 1, 4, 1, 2, 1, 8, 1, 2, 1, 4, ...
 
 
 ### Snippet 0x32
@@ -853,7 +859,7 @@ Finds the highest power of two dividing `rax + 1` by computing: `((rax >> 1) ^ r
     and      rax,1
 ```
 
-*TODO: No idea about this one.*
+This computes `rax := (popcnt((rax >> 1) ^ rax) ^ rax) & 1` where *popcnt* computes the number of `1`-bits. This evaluates to `0` for all inital values of `rax`.
 
 
 ### Snippet 0x33
@@ -884,7 +890,18 @@ Finds the highest power of two dividing `rax + 1` by computing: `((rax >> 1) ^ r
     xor      rax,rdx
 ```
 
-*TODO: No idea about this one.*
+Defines a permutation of 64-bit integers where each `rax` value is mapped into the corresponding 64-bit Grey-code. This corresponds to the sequence [A006068](https://oeis.org/A006068) and it's computed via:
+
+```cpp
+rax := (rax >> 0x01) ^ rax
+rax := (rax >> 0x02) ^ rax
+rax := (rax >> 0x04) ^ rax
+rax := (rax >> 0x08) ^ rax
+rax := (rax >> 0x10) ^ rax
+rax := (rax >> 0x20) ^ rax
+```
+
+See also: https://en.wikipedia.org/wiki/Gray_code
 
 
 ### Snippet 0x34
@@ -1071,7 +1088,9 @@ FF01010000000000 => 0080808080808080
     xor      rax,rdx
 ```
 
-*TODO: No idea about this one.*
+Computes the negabinary representation of `rax`.
+
+Instead of having the binary basis *(+1, +2, +4, +8, +16, +32, ...)*, negabinary numbers have the basis *(+1, -2, +4, -8, +16, -32, ...)*. For instance, the number *3* (i.e. 0b11) gets mapped into 0b111 (i.e. 7) T *3 = 4 - 2 + 1*.
 
 
 ### Snippet 0x3A
@@ -1088,7 +1107,13 @@ FF01010000000000 => 0080808080808080
     xlatb
 ```
 
-*TODO: No idea about this one.*
+This snippet computes the amount of (left-most) leading zeros via De Bruijn sequences.
+
+The first block determines the highest power of two dividing `rax` by computing `rax := rax & (-rax)`. This results in the sequence [A006519](https://oeis.org/A006519) whose first elements are: 0, 1, 2, 1, 4, 1, 2, 1, 8, ...
+
+The second block together with the `xlatb` instruction computes `rax := rbx[(rax * 218A392CD3D5DBF) >> 58]` where `rbx` points to a De Bruijn table with 64 entries. This is equivalent to computing the binary logarithm of the previous 64-bit integer.
+
+See also: http://supertech.csail.mit.edu/papers/debruijn.pdf
 
 
 ### Snippet 0x3B
@@ -1100,7 +1125,16 @@ FF01010000000000 => 0080808080808080
     xor      eax,edx
 ```
 
-*TODO: No idea about this one.*
+This snippet computes:
+
+```cpp
+if (eax >= 0)
+    eax = (eax * 2)
+else
+    eax = (eax * 2) ^ 0xC0000401
+```
+
+*TODO: Is there anything else special about this snippet?*
 
 
 ### Snippet 0x3C
@@ -1167,7 +1201,7 @@ FF01010000000000 => 0080808080808080
     and      rax,0x3
 ```
 
-*TODO: No idea about this one.*
+Computes the direction of the lines in the (Heighway) Dragon Curve by computing `popcnt(rax ^ (rax >> 1)) & 3`. This produces the sequence [A246960](https://oeis.org/A246960), the fixed point of the morphism *{0 -> (0,1), 1 -> (2,1), 2 -> (2,3), 3 -> (0,3)}*.
 
 
 ### Snippet 0x3F

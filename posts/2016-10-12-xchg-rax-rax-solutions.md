@@ -78,7 +78,7 @@ Boolean cast: `rax := bool(rax)`, i.e. `rax := rax ? 1 : 0`.
     add      rax,rcx
 ```
 
-Minimum function: `rax := min(rax, rdx)`.
+Maximum function: `rax := max(rax, rdx)`.
 
 
 ### Snippet 0x04

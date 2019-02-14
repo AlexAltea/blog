@@ -1,6 +1,8 @@
 ---
 layout: live
+date: 2016-08-22 00:00:00 UTC
 title: Observations
+author: Alexandro Sanchez
 ---
 
 Random observations, questions, and interesting facts that caught my attention. If you can expand or answer any of these, please feel free to contact me.

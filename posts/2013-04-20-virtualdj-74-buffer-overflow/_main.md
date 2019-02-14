@@ -2,9 +2,10 @@
 layout: post
 date: 2013-04-20 00:00:00 UTC
 title: VirtualDJ Pro/Home 7.4: Buffer Overflow
+author: Alexandro Sanchez
 ---
 
-I have found a buffer overflow vulnerability in [VirtualDJ Pro 7.4 and VirtualDJ Home 7.4](http://www.virtualdj.com/) and possibly previous versions of this software. After right-clicking a file and entering the "_File Infos_" > "_Cover..._" menu, VirtualDJ tries to find a cover for the given file on Google Images and stores the request URL in a buffer which looks like: `"http://images.google.com/images?q=X"` where `X` corresponds to the ID3 tag _Title_. Special characters of this tag are ignored, and any sequence of symbols (e.g. `' '`, `'-'`, `'_'`) is replaced with `'+'`. The problem is [once again](2013-03-30-virtualdj-73-buffer-overflow.md) that VirtualDJ does not check if the information stored in the ID3 tags is too big to fit in the buffer.
+I have found a buffer overflow vulnerability in [VirtualDJ Pro 7.4 and VirtualDJ Home 7.4](http://www.virtualdj.com/) and possibly previous versions of this software. After right-clicking a file and entering the "_File Infos_" > "_Cover..._" menu, VirtualDJ tries to find a cover for the given file on Google Images and stores the request URL in a buffer which looks like: `"http://images.google.com/images?q=X"` where `X` corresponds to the ID3 tag _Title_. Special characters of this tag are ignored, and any sequence of symbols (e.g. `' '`, `'-'`, `'_'`) is replaced with `'+'`. The problem is [once again](../2013-03-30-virtualdj-73-buffer-overflow/) that VirtualDJ does not check if the information stored in the ID3 tags is too big to fit in the buffer.
 
 To exploit this vulnerability, I searched for a `call esp` instruction stored in an address that could be represented with alphanumeric characters, I found such instruction in 0x444D4C64, that is, `"dLMD"`. After entering this call, all the bytes after the _Fake Title_ + _Spaces_ + _Padding_ + `"dLMD"` will be executed. Since we can only use alphanumeric characters, we have to encode the shellcode and decode it in execution time using only bytes in range `[0-9A-Za-z]`. For this purpose I used a function from [ALPHA3](http://code.google.com/p/alpha3/). After that, the original shellcode will be decoded and executed.
 

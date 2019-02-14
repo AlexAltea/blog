@@ -2,6 +2,7 @@
 layout: post
 date: 2017-06-19 00:00:00 UTC
 title: GoogleCTF 2017 Reversing/Moon writeup
+author: Alexandro Sanchez
 ---
 
 Last weekend I participated on the [Google CTF 2017](https://capturetheflag.withgoogle.com/) as part of the glorious team "*63 7c 77 7b f2 6b 6f c5 30 01 67 2b fe d7 ab 76*" composed of [AlexF0rtune](https://twitter.com/AlexF0rtune) and me. Among the many tough and fun challenges that we attempted, and the few ones that we actually solved, *moon* was certainly the most entertaining one for me, so I decided to prepare a writeup of my solution.

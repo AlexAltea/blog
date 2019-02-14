@@ -2,6 +2,7 @@
 layout: post
 date: 2013-03-30 00:00:00 UTC
 title: VirtualDJ Pro/Home 7.3: Buffer Overflow
+author: Alexandro Sanchez
 ---
 
 I have found a buffer overflow vulnerability in [VirtualDJ Pro 7.3 and VirtualDJ Home 7.3](http://www.virtualdj.com/) and possibly previous versions of this software. When the user enters a folder, VirtualDJ tries to retrieve all information from the ID3 tags of MP3 files inside such as _Title_, _Album_, and _Artist_ and stores it in a buffer. After that, a second buffer of length 4096 is allocated in the stack and only the characters `[A-Z]` from the first buffer will be copied to it. According to the ID3 v2.x standard, these tags can have a length greater than 4096; therefore it is possible to produce a buffer overflow in this second buffer. At the time when the buffer overflow happens and the program reaches the `retn` instruction, the `edi` register points to the first buffer.

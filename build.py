@@ -50,8 +50,9 @@ def build_post(path):
 def build_index(target):
     posts = '<thead><td><b>Date</b></td><td><b>Article</b></td></thead>'
     for post in index[::-1]:
+        link = post['link'].replace('index.html', '')
         posts += '<tr><td>%s</td><td><a href="%s">%s</a></td></tr>' % (
-            post['date'], post['link'], post['title'])
+            post['date'], link, post['title'])
     posts = '<table>%s</table>' % (posts)
     with open('templates/index.html', 'r') as f:
         html = f.read()

@@ -1,6 +1,6 @@
 ---
 layout: post
-date: 2016-10-12 00:00:00 UTC
+date: 2016-10-12
 title: Solutions of xchg rax,rax
 author: Alexandro Sanchez
 ---

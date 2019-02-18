@@ -1,0 +1,362 @@
+<!-- This file has been auto-generated! -->
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>PS3/Cell Cryptomining: Wide arithmetic on SPUs</title>
+        <!-- Style -->
+        <link rel="stylesheet" href="../../css/code.css">
+        <link rel="stylesheet" href="../../css/markdown.css">
+        <style>
+            body {
+                box-sizing: border-box;
+                min-width: 200px;
+                max-width: 980px;
+                margin: 0 auto;
+                padding: 45px;
+            }
+
+            header {
+                position: relative;
+            }
+            header > .links {
+                position: absolute;
+                right: 0;
+            }
+
+            .post-key {
+                background-color: hsl(45, 67%, 80%);
+                border-radius: 5px 0px 0px 5px;
+                padding: 2px 6px 2px 8px;
+                margin: 0px;
+            }
+            .post-val {
+                background-color: hsl(45, 67%, 90%);
+                border-radius: 0px 5px 5px 0px;
+                padding: 2px 8px 2px 6px;
+                margin: 0px;
+            }
+
+            footer {
+                text-align: center;
+            }
+        
+            @media (max-width: 767px) {
+                body {
+                    padding: 15px;
+                }
+            }
+        </style>
+    </head>
+    <body class="markdown-body">
+        <header>
+            <div class="links">
+                <span>
+                    <a href="https://twitter.com/AlexAltea">Twitter</a> |
+                    <a href="https://github.com/AlexAltea">Github</a> |
+                    <a href="mailto:alexandro@phi.nz">Email</a>
+                </span>
+            </div>
+            <span><a href="../../">&lt; Other articles</a></span>
+        </header>
+        <article>
+            <h1>PS3/Cell Cryptomining: Wide arithmetic on SPUs</h1>
+            <p>
+                <span 
+                    class="post-key">Author</span><span
+                    class="post-val">Alexandro Sanchez</span>
+                <span
+                    class="post-key">Date</span><span
+                    class="post-val">2019-02-16</span>
+            </p>
+            <div class="toc">
+<ul>
+<li><a href="#background">Background</a></li>
+<li><a href="#multiplication-64-bit">Multiplication (64-bit)</a><ul>
+<li><a href="#theory">Theory</a></li>
+<li><a href="#implementation">Implementation</a><ul>
+<li><a href="#1-multiplying-half-words">1. Multiplying half-words</a></li>
+<li><a href="#2-shuffling-half-words">2. Shuffling half-words</a></li>
+<li><a href="#3-adding-results">3. Adding results</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#addition-128-bit">Addition (128-bit)</a><ul>
+<li><a href="#theory_1">Theory</a></li>
+<li><a href="#implementation_1">Implementation</a><ul>
+<li><a href="#1-basic-idea">1. Basic idea</a></li>
+<li><a href="#2-optimizing-register-usage">2. Optimizing register usage</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#sources">Sources</a></li>
+</ul>
+</div>
+<h2 id="background">Background</h2>
+<p>Some time ago, I implemented a cryptocurrency miner for the <a href="https://en.wikipedia.org/wiki/Cell_(microprocessor)">Cell B.E. Architecture</a> used in the PlayStation 3 and certain servers. Specifically, the goal was implementing PoW-algorithms based on CryptoNight, described by the <a href="https://cryptonote.org/standards/">CryptoNote</a> standards and used by <a href="https://www.getmonero.org/">Monero/XMR</a>.</p>
+<p>At their current valuation, no such cryptocurrency can be profitably mined using consumer PlayStation 3 hardware and this situation is not expected to revert in the short/mid term. Furthermore, possible long-term changes are irrelevant, as newer hardware will increasingly outperform the Cell B.E., raising mining difficulty and the profitability threshold ever further.</p>
+<p>Consequently, I'm releasing the source code of this miner along with blog articles on technical aspects of Cell B.E. that might be of general interest (even if just for historical reasons):</p>
+<ol>
+<li><a href=".">PS3/Cell Cryptomining: Wide arithmetic on SPUs</a>.</li>
+<li><a href="#">PS3/Cell Cryptomining: High-performance AES on SPUs</a>. (TBD.)</li>
+<li><a href="#">PS3/Cell Cryptomining: Memory Flow Controller</a>. (TBD.)</li>
+</ol>
+<p>This first post describes the implementation of wide arithmetic operations on "narrow" ALUs present in the SPUs.</p>
+<h2 id="multiplication-64-bit">Multiplication (64-bit)</h2>
+<p>CryptoNight requires a 64-bit x 64-bit integer multiplication that results in a 128-bit integer. Implementing such operation on the SPUs is challenging as the largest multiplication granularity available is 16-bit x 16-bit to 32-bit due to the word-size limitations of the SPU ALUs. The following algorithm describes how to emulate such multiplication.</p>
+<h3 id="theory">Theory</h3>
+<p>Consider the <code>a</code> and <code>b</code> input registers, the 64-bit LHS and RHS of the multiplication operation are composed of the half-words [a0, a1, a2, a3] and [b0, b1, b2, b3], respectively.</p>
+<div class="codehilite"><pre><span></span>   0        16       32       48       64       80       96       112      128
+   +--------+--------+--------+--------+--------+--------+--------+--------+
+a: |   a0   |   a1   |   a2   |   a3   |   XX   |   XX   |   XX   |   XX   |
+   +--------+--------+--------+--------+--------+--------+--------+--------+
+   +--------+--------+--------+--------+--------+--------+--------+--------+
+b: |   b0   |   b1   |   b2   |   b3   |   XX   |   XX   |   XX   |   XX   |
+   +--------+--------+--------+--------+--------+--------+--------+--------+
+   MSB                                                                     LSB
+</pre></div>
+
+
+<p>This is equivalent to the following representation:</p>
+<div class="codehilite"><pre><span></span>LHS := a3 + (a2 * 2^16) + (a1 * 2^32) + (a0 * 2^48)
+RHS := b3 + (b2 * 2^16) + (b1 * 2^32) + (b0 * 2^48)
+</pre></div>
+
+
+<p>Applying the distributive property, the multiplication of both values should be equivalent to:</p>
+<div class="codehilite"><pre><span></span>LHS * RHS = (a3 + (a2 * 2^16) + (a1 * 2^32) + (a0 * 2^48)) *
+            (b3 + (b2 * 2^16) + (b1 * 2^32) + (b0 * 2^48))
+          = (a3*b3*2^00) + (a3*b2*2^16) + (a3*b1*2^32) + (a3*b0*2^48) +
+            (a2*b3*2^16) + (a2*b2*2^32) + (a2*b1*2^48) + (a2*b0*2^64) +
+            (a1*b3*2^32) + (a1*b2*2^48) + (a1*b1*2^64) + (a1*b0*2^80) +
+            (a0*b3*2^48) + (a0*b2*2^64) + (a0*b1*2^80) + (a0*b0*2^96)    
+</pre></div>
+
+
+<p>Our implementation will perform these 16 multiplications of 16-bit words (<code>aX*bY</code>), shift the results (<code>*2^N</code>), and add everything together using 128-bit additions.</p>
+<h3 id="implementation">Implementation</h3>
+<p>First of all, let's recap the available multiplication operations in SPU (quoted from the <em>Synergistic Processor Unit Instruction Set Architecture v1.2</em>):</p>
+<blockquote>
+<ul>
+<li><code>mpy rt,ra,rb</code>: <strong>Multiply</strong>. The signed 16 least significant bits of the corresponding word elements of registers <code>ra</code> and <code>rb</code> are multiplied, and the 32-bit products are placed in the corresponding word elements of register <code>rt</code>.</li>
+<li><code>mpyhh rt,ra,rb</code>: <strong>Multiply high high</strong>. The signed 16 most significant bits of the word elements of registers <code>ra</code> and <code>rb</code> are multiplied, and the 32-bit products are placed in the corresponding word elements of register <code>rt</code>.</li>
+</ul>
+</blockquote>
+<p>When necessary, unsigned variants are available by adding an <code>u</code> suffix to the instruction name.</p>
+<h4 id="1-multiplying-half-words">1. Multiplying half-words</h4>
+<p>The distributive unfolding of the multiplication described earlier involves multiplying 16 half-words pairs into 16 words. Each multiplication instruction yields a maximum of 4 32-bit words, but since only 64-bits are used in <code>a</code> and <code>b</code>, only 2 are useful.</p>
+<p>To minimize the number of multiplications, we can duplicate/shuffle half-words to the unused 64-bits of the quad-word via <code>shufb</code> as follows (this step can also be used to switch endianness, if necessary):</p>
+<div class="codehilite"><pre><span></span>   0        16       32       48       64       80       96       112      128
+   +--------+--------+--------+--------+--------+--------+--------+--------+
+a: |   a0   |   a1   |   a2   |   a3   |   a2   |   a3   |   a0   |   a1   |
+   +--------+--------+--------+--------+--------+--------+--------+--------+
+   +--------+--------+--------+--------+--------+--------+--------+--------+
+b: |   b0   |   b1   |   b2   |   b3   |   b0   |   b1   |   b2   |   b3   |
+   +--------+--------+--------+--------+--------+--------+--------+--------+
+   MSB                                                                     LSB
+</pre></div>
+
+
+<p>Additionally, we left-shift by 16 both <code>a</code>, <code>b</code> into <code>c</code>, <code>d</code> respectively, to do high-low multiplications (similarly to the <code>mpyh</code> instruction but without post-shifting). It does not matter whether the least significant half-word is zeroed. The result is:</p>
+<div class="codehilite"><pre><span></span>   0        16       32       48       64       80       96       112      128
+   +--------+--------+--------+--------+--------+--------+--------+--------+
+c: |   a1   |  (a2)  |   a3   |  (a2)  |   a3   |  (a0)  |   a1   |  (00)  |
+   +--------+--------+--------+--------+--------+--------+--------+--------+
+   +--------+--------+--------+--------+--------+--------+--------+--------+
+d: |   b1   |  (b2)  |   b3   |  (b0)  |   b1   |  (b2)  |   b3   |  (00)  |
+   +--------+--------+--------+--------+--------+--------+--------+--------+
+   MSB                                                                     LSB
+</pre></div>
+
+
+<p>This way we can generate all necessary multiplications as follows:</p>
+<div class="codehilite"><pre><span></span>mpy     t0, a, b
+mpyhh   t1, a, d
+mpyhh   t2, b, c
+mpyhh   t3, a, b
+</pre></div>
+
+
+<p>Leaving us with the following results:</p>
+<div class="codehilite"><pre><span></span>   0        16       32       48       64       80       96       112      128
+   +--------+--------+--------+--------+--------+--------+--------+--------+
+t0 |     a1 * b1     |     a3 * b3     |     a3 * b1     |     a1 * b3     |
+   +--------+--------+--------+--------+--------+--------+--------+--------+
+   +--------+--------+--------+--------+--------+--------+--------+--------+
+t1 |     a0 * b1     |     a2 * b3     |     a2 * b1     |     a0 * b3     |
+   +--------+--------+--------+--------+--------+--------+--------+--------+
+   +--------+--------+--------+--------+--------+--------+--------+--------+
+t2 |     b0 * a1     |     b2 * a3     |     b0 * a3     |     b2 * a1     |
+   +--------+--------+--------+--------+--------+--------+--------+--------+
+   +--------+--------+--------+--------+--------+--------+--------+--------+
+t3 |     a0 * b0     |     a2 * b2     |     a2 * b0     |     a0 * b2     |
+   +--------+--------+--------+--------+--------+--------+--------+--------+
+   MSB                                                                     LSB
+</pre></div>
+
+
+<h4 id="2-shuffling-half-words">2. Shuffling half-words</h4>
+<p>Before adding each of these 16 words, we need to multiply each by the corresponding power of 2 computed previously (i.e. shifting by a certain amount in bits). These constants are:</p>
+<div class="codehilite"><pre><span></span>   0        16       32       48       64       80       96       112      128
+   +--------+--------+--------+--------+--------+--------+--------+--------+
+t0 | t00          64 | t01           0 | t02          32 | t03          32 |
+   +--------+--------+--------+--------+--------+--------+--------+--------+
+   +--------+--------+--------+--------+--------+--------+--------+--------+
+t1 | t10          80 | t11          16 | t12          48 | t13          48 |
+   +--------+--------+--------+--------+--------+--------+--------+--------+
+   +--------+--------+--------+--------+--------+--------+--------+--------+
+t2 | t20          80 | t21          16 | t22          48 | t23          48 |
+   +--------+--------+--------+--------+--------+--------+--------+--------+
+   +--------+--------+--------+--------+--------+--------+--------+--------+
+t3 | t30          96 | t31          32 | t32          64 | t33          64 |
+   +--------+--------+--------+--------+--------+--------+--------+--------+
+   MSB                                                                     LSB
+</pre></div>
+
+
+<p>We need to move these words into their proper locations (note that some words like <code>t02</code> or <code>t30</code> are already well placed). Using scratch registers is necessary, since working directly on {t0, t1, t2, t3} would cause bits to get lost due to overlaps. Doing this naively would involve using 16 scratch registers, i.e. 16 128-bit integers to be added later on.</p>
+<p>However, by shuffling bytes via <code>shufb</code> we can bring this down to only 7 scratch registers:</p>
+<div class="codehilite"><pre><span></span>   128      112      96       80       64       48       32       16       0
+   +--------+--------+--------+--------+--------+--------+--------+--------+
+v0 |                 | ##### t00 ##### | ##### t02 ##### | ##### t01 ##### |
+   +--------+--------+--------+--------+--------+--------+--------+--------+
+   +--------+--------+--------+--------+--------+--------+--------+--------+
+v1 | ##### t30 ##### | ##### t32 ##### | ##### t31 ##### |                 |
+   +--------+--------+--------+--------+--------+--------+--------+--------+
+   +--------+--------+--------+--------+--------+--------+--------+--------+
+v2 |                 | ##### t33 ##### | ##### t03 ##### |                 |
+   +--------+--------+--------+--------+--------+--------+--------+--------+
+   +--------+--------+--------+--------+--------+--------+--------+--------+
+v3 |        | ##### t10 ##### | ##### t12 ##### | ##### t11 ##### |        |
+   +--------+--------+--------+--------+--------+--------+--------+--------+
+   +--------+--------+--------+--------+--------+--------+--------+--------+
+v4 |        | ##### t20 ##### | ##### t22 ##### | ##### t21 ##### |        |
+   +--------+--------+--------+--------+--------+--------+--------+--------+
+   +--------+--------+--------+--------+--------+--------+--------+--------+
+v5 |                          | ##### t13 ##### |                          |
+   +--------+--------+--------+--------+--------+--------+--------+--------+
+   +--------+--------+--------+--------+--------+--------+--------+--------+
+v6 |                          | ##### t23 ##### |                          |
+   +--------+--------+--------+--------+--------+--------+--------+--------+
+   MSB                                                                     LSB
+</pre></div>
+
+
+<p>This is accomplished by the following operations (note that only 5 shuffle masks are necessary):</p>
+<div class="codehilite"><pre><span></span>shufb   v0, t0, t0, mask_v0
+shufb   v1, t3, t3, mask_v1
+shufb   v2, t0, t3, mask_v2
+shufb   v3, t1, t1, mask_v3_v4
+shufb   v4, t2, t2, mask_v3_v4
+shufb   v5, t1, t1, mask_v5_v6
+shufb   v6, t2, t2, mask_v5_v6
+</pre></div>
+
+
+<h4 id="3-adding-results">3. Adding results</h4>
+<p>The final step is adding the 7 resulting 28-bit words {v0, ..., v6} as described by the algorithm "<em>Addition (128-bit)</em>". Let such algorithm be implemented by the macro <code>add_128(output, lhs, rhs)</code>. The final result <code>r</code> of the multiplication algorithm is computed as follows:</p>
+<div class="codehilite"><pre><span></span>add_128  t0, v0, v1
+add_128  t1, v2, v3
+add_128  t2, v4, v5
+add_128  t0, t0, t1
+add_128  t0, t0, t2
+add_128   r, t0, v6
+</pre></div>
+
+
+<p>As a final step, one might shuffle bytes again to match the desired endianness.</p>
+<h2 id="addition-128-bit">Addition (128-bit)</h2>
+<p>During the implementation of "<em>Multiplication (64-bit)</em>" we required a 128-bit + 128-bit integer addition that results in a 128-bit integer, but the largest granularity we can achieve for additions in SPUs is 32-bit. Although our approach here is relatively straightforward, we document it here for the sake of completeness.</p>
+<h3 id="theory_1">Theory</h3>
+<p>Consider the <code>a</code> and <code>b</code> input registers and the <code>s</code> output register, the 128-bit LHS and RHS of the addition operation composed of the 32-bit words [a0, a1, a2, a3] and [b0, b1, b2, b3], respectively.</p>
+<div class="codehilite"><pre><span></span>   0                 32                64                96                128
+   +-----------------+-----------------+-----------------+-----------------+
+a: |        a0       |        a1       |        a2       |        a3       |  
+   +-----------------+-----------------+-----------------+-----------------+
+   +-----------------+-----------------+-----------------+-----------------+
+b: |        b0       |        b1       |        b2       |        b3       |
+   +-----------------+-----------------+-----------------+-----------------+
+   MSB                                                                     LSB
+</pre></div>
+
+
+<p>This is equivalent to the following representation:</p>
+<div class="codehilite"><pre><span></span>LHS := a3 + (a2 * 2^32) + (a1 * 2^64) + (a0 * 2^96)
+RHS := b3 + (b2 * 2^32) + (b1 * 2^64) + (b0 * 2^96)
+</pre></div>
+
+
+<p>Similar to four-bit adder, we perform the addition component-wise propagating the carry bit from the LSW to the MSW. We represent this carry-bit with the <code>overflow</code> (shortened as <code>o</code>), that takes an addition result and outputs 1 if the addition is &gt;= 2^32, and 0 otherwise.</p>
+<div class="codehilite"><pre><span></span>s3 = a3 + b3
+s2 = a2 + b2 + overflow(s3)
+s1 = a1 + b1 + overflow(s2)
+s0 = a0 + b0 + overflow(s1)
+</pre></div>
+
+
+<h3 id="implementation_1">Implementation</h3>
+<p>First of all, let's recap the available multiplication operations in SPU (quoted from the <em>Synergistic Processor Unit Instruction Set Architecture v1.2</em>):</p>
+<blockquote>
+<ul>
+<li><code>a rt,ra,rb</code>: <strong>Add Word</strong>. Each word element of register <code>ra</code> is added to the corresponding word element of register <code>rb</code>, and the results are placed in the corresponding word elements of register <code>rt</code>.</li>
+<li><code>cg rt,ra,rb</code>: <strong>Carry Generate</strong>. Each word element of register <code>ra</code> is added to the corresponding word element of register <code>rb</code>. The carry out is placed in the least significant bit of the corresponding word element of register <code>rt</code>, and 0 is placed in the remaining bits of <code>rt</code>.</li>
+<li><code>shlqbyi rt,ra,value</code>: <strong>Shift Left Quadword by Bytes Immediate</strong>. The contents of register <code>ra</code> are shifted left by the number of bytes specified by the unsigned 5-bit <code>value</code>. The result is placed in register <code>rt</code>.</li>
+</ul>
+</blockquote>
+<h4 id="1-basic-idea">1. Basic idea</h4>
+<p>By using these instructions, we can perform this addition as follows:</p>
+<div class="codehilite"><pre><span></span>   +-----------------+-----------------+-----------------+-----------------+
+t0 | t00:   a0 + b0  | t01:   a1 + b1  | t02:   a2 + b2  | t03:   a3 + b3  |
+   +-----------------+-----------------+-----------------+-----------------+
+c0 | c00: o(a1 + b1) | c01: o(a2 + b2) | c02: o(a3 + b3) |                 |
+   +-----------------+-----------------+-----------------+-----------------+
+   +-----------------+-----------------+-----------------+-----------------+
+t1 | t10:   t00+c00  | t11:   t01+c01  | t12:   t02+c02  |                 |
+   +-----------------+-----------------+-----------------+-----------------+
+c1 | c10: o(t01+c01) | c11: o(t02+c02) |                 |                 |
+   +-----------------+-----------------+-----------------+-----------------+
+   +-----------------+-----------------+-----------------+-----------------+
+t2 | t20:   t10+c10  | t21:   t11+c11  |                 |                 |
+   +-----------------+-----------------+-----------------+-----------------+
+c2 | c20: o(t11+c11) |                 |                 |                 |
+   +-----------------+-----------------+-----------------+-----------------+
+   +-----------------+-----------------+-----------------+-----------------+
+t3 | t30:   t20+c20  |                 |                 |                 |
+   +-----------------+-----------------+-----------------+-----------------+
+</pre></div>
+
+
+<p>Here, at each iteration <em>N = {0,1,2,3}</em>, the temporary variable <em>tN</em> contains the 32-bit componentwise addition of <em>tN-1</em> and <em>cN-1</em>. This can easily be done with the <code>a</code> instruction described before. The temporary variables <em>cN</em> contain the word-shifted carry bit of said addition, which can be achieved by a combination of the <code>cg</code> and <code>shlqbyi</code> instructions.</p>
+<p>This process is kickstarted by computing the addition and shifted overflow of the original LHS and RHS components into the <em>t0</em> and <em>c0</em> registers respectively. The final output register <code>r</code> can simply be computed as [t30, t21, t12, t03].</p>
+<h4 id="2-optimizing-register-usage">2. Optimizing register usage</h4>
+<p>By analyzing dependencies, you might observe that no more than 3 temporary variables are used at any time. Let's redefine these as <code>t0</code>, <code>t1</code>, <code>t2</code>. Additionally, given that left-shifts are always zero-extended, we can preserve the LSWs as we "carry on" with the computation (no pun intended), saving us from cherry-picking words from different temporaries into <code>r</code>.</p>
+<p>The final algorithm would look like this:</p>
+<div class="codehilite"><pre><span></span>cg         t1, lhs, rhs
+a          t0, lhs, rhs
+shlqbyi    t1, t1, 4
+cg         t2, t0, t1
+a          t0, t0, t1
+shlqbyi    t2, t2, 4
+cg         t1, t0, t2
+a          t0, t0, t2
+shlqbyi    t1, t1, 4
+a           r, t0, t1
+</pre></div>
+
+
+<p>Note that the same approach is used to perform 64-bit additions, required in CryptoNight's Memory-Hard Loop.</p>
+<h2 id="sources">Sources</h2>
+<p>You can find the source code for these implementations in: <a href="arithmetic.s"><code>arithmetic.s</code></a>.</p>
+        </article>
+        <hr>
+        <footer>
+            <p>
+                Questions? Comments? <a href="https://github.com/AlexAltea/blog/issues">Open an issue!</a>
+            </p>
+            <p><a href="mailto:alexandro@phi.nz">alexandro@phi.nz</a></p>
+        </footer>
+    </body>
+</html>

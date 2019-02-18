@@ -1,6 +1,6 @@
 ---
 layout: post
-date: 2016-09-07 00:00:00 UTC
+date: 2016-09-07
 title: Fast lookups in JIT-compiled maps
 author: Alexandro Sanchez
 ---

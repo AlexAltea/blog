@@ -1,6 +1,6 @@
 ---
 layout: post
-date: 2013-03-30 00:00:00 UTC
+date: 2013-03-30
 title: VirtualDJ Pro/Home 7.3: Buffer Overflow
 author: Alexandro Sanchez
 ---

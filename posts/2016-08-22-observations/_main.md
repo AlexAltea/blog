@@ -1,6 +1,6 @@
 ---
 layout: live
-date: 2016-08-22 00:00:00 UTC
+date: 2016-08-22
 title: Observations
 author: Alexandro Sanchez
 ---

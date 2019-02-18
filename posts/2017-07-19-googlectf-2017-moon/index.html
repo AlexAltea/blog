@@ -1,0 +1,277 @@
+<!-- This file has been auto-generated! -->
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>GoogleCTF 2017 Reversing/Moon writeup</title>
+        <!-- Style -->
+        <link rel="stylesheet" href="../../css/code.css">
+        <link rel="stylesheet" href="../../css/markdown.css">
+        <style>
+            body {
+                box-sizing: border-box;
+                min-width: 200px;
+                max-width: 980px;
+                margin: 0 auto;
+                padding: 45px;
+            }
+
+            header {
+                position: relative;
+            }
+            header > .links {
+                position: absolute;
+                right: 0;
+            }
+
+            .post-key {
+                background-color: hsl(45, 67%, 80%);
+                border-radius: 5px 0px 0px 5px;
+                padding: 2px 6px 2px 8px;
+                margin: 0px;
+            }
+            .post-val {
+                background-color: hsl(45, 67%, 90%);
+                border-radius: 0px 5px 5px 0px;
+                padding: 2px 8px 2px 6px;
+                margin: 0px;
+            }
+
+            footer {
+                text-align: center;
+            }
+        
+            @media (max-width: 767px) {
+                body {
+                    padding: 15px;
+                }
+            }
+        </style>
+    </head>
+    <body class="markdown-body">
+        <header>
+            <div class="links">
+                <span>
+                    <a href="https://twitter.com/AlexAltea">Twitter</a> |
+                    <a href="https://github.com/AlexAltea">Github</a> |
+                    <a href="mailto:alexandro@phi.nz">Email</a>
+                </span>
+            </div>
+            <span><a href="../../">&lt; Other articles</a></span>
+        </header>
+        <article>
+            <h1>GoogleCTF 2017 Reversing/Moon writeup</h1>
+            <p>
+                <span 
+                    class="post-key">Author</span><span
+                    class="post-val">Alexandro Sanchez</span>
+                <span
+                    class="post-key">Date</span><span
+                    class="post-val">2017-06-19</span>
+            </p>
+            <p>Last weekend I participated on the <a href="https://capturetheflag.withgoogle.com/">Google CTF 2017</a> as part of the glorious team "<em>63 7c 77 7b f2 6b 6f c5 30 01 67 2b fe d7 ab 76</em>" composed of <a href="https://twitter.com/AlexF0rtune">AlexF0rtune</a> and me. Among the many tough and fun challenges that we attempted, and the few ones that we actually solved, <em>moon</em> was certainly the most entertaining one for me, so I decided to prepare a writeup of my solution.</p>
+<p>The problem simply states:</p>
+<blockquote>
+<p>What's the password?
+<a href="moon.zip">moon.zip</a></p>
+</blockquote>
+<h2 id="static-analysis">Static analysis</h2>
+<p>After extracting the ZIP file, we see our target is a Win32 executable, using OpenGL to render a simple UI asking for a password of length 32. For wrong passwords it will display the message: "<em>Nope</em>".</p>
+<p>As usual with these kind of challenges, one would start by looking for occurrences of this string within the executable, and find code referencing said string. Opening the executable with <a href="https://www.hex-rays.com/products/ida/">IDA Pro</a> and searching for strings containing <code>Nope</code> we find the string <code>____NopeGood</code> referenced in <code>sub_402660</code>. Decompiled and slightly formatting the relevant code results in:</p>
+<div class="codehilite"><pre><span></span><span class="c1">// const char aNopegood[] = &quot;    NopeGood&quot;;</span>
+<span class="n">v12</span> <span class="o">=</span> <span class="n">dword_4CA0AC</span><span class="p">;</span>
+<span class="n">v15</span> <span class="o">=</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">v12</span><span class="p">;</span>
+<span class="n">v16</span> <span class="o">=</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="kr">__int8</span><span class="p">)</span><span class="n">aNopegood</span><span class="p">[</span><span class="n">v15</span><span class="p">];</span>
+</pre></div>
+
+
+<p>The value <code>dword_4CA0AC</code> acts as an index into the aforementioned string. If we want to succeed (i.e. obtain <code>Good</code>) we need its value to be 2. If we search of occurrences where the value at <code>4CA0AC</code> is modified to 2 we obtain the following occurrence in the function <code>sub_498A10</code>:</p>
+<p><img alt="" src="ida.png"></p>
+<p>In order to pass the test, both buffers passed to <code>memcmp</code> have to match.</p>
+<h2 id="dynamic-analysis">Dynamic analysis</h2>
+<p>To simplify the process of reversing, we used <a href="http://x64dbg.com/">x64dbg</a> to quickly debug and inspect the memory of the program while it's running.</p>
+<p>These buffers seem to contain each 512 bytes of what looks like the hexadecimal representation of a hash. The contents pointed by <code>rcx</code> change every time the password is modified (<em>computed hash string</em>). The contents pointed by <code>rdx</code> are constant (<em>expected hash string</em>) and it's first bytes are:</p>
+<div class="codehilite"><pre><span></span>                   0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F  0123456789ABCDEF
+0000000000F86BD0  33 30 63 37 65 61 64 39 37 31 30 37 37 37 35 39  30c7ead971077759         
+0000000000F86BE0  36 39 62 65 34 62 61 30 30 63 66 35 35 37 38 66  69be4ba00cf5578f         
+...
+</pre></div>
+
+
+<p>After reversing <code>sub_498A10</code>, we realize that the <em>computed buffer</em> is generated by converting each integer from a buffer <code>uint32_t hash[64]</code> (i.e. length 0x100) into a hexadecimal string via <code>%.8x</code> (see <code>sub_4016D0</code>). Concatenating all these hexadecimal strings results in the aforementioned hexadecimal string. Relevant code:</p>
+<div class="codehilite"><pre><span></span><span class="n">v14</span> <span class="o">=</span> <span class="p">(</span><span class="n">__int128</span> <span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">v41</span><span class="p">;</span>
+<span class="c1">// ...</span>
+<span class="k">if</span> <span class="p">((</span><span class="kt">unsigned</span> <span class="kr">__int8</span><span class="p">)</span><span class="n">sub_401BF0</span><span class="p">(</span><span class="n">qword_4CA080</span><span class="p">,</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="kr">__int64</span><span class="p">)</span><span class="o">&amp;</span><span class="n">v41</span><span class="p">))</span> <span class="p">{</span>
+  <span class="k">do</span> <span class="p">{</span>
+    <span class="n">v15</span> <span class="o">=</span> <span class="o">*</span><span class="p">(</span><span class="n">_DWORD</span> <span class="o">*</span><span class="p">)</span><span class="n">v14</span><span class="p">;</span>
+    <span class="n">v28</span> <span class="o">=</span> <span class="mi">0</span><span class="n">i64</span><span class="p">;</span>
+    <span class="n">v29</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="n">sub_4016D0</span><span class="p">(</span><span class="o">&amp;</span><span class="n">v28</span><span class="p">,</span> <span class="s">&quot;%.8x&quot;</span><span class="p">,</span> <span class="n">v15</span><span class="p">);</span>
+    <span class="n">v16</span> <span class="o">=</span> <span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">v28</span> <span class="o">+</span> <span class="n">strlen</span><span class="p">((</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">v28</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span> <span class="n">v16</span> <span class="o">-</span> <span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">v28</span> <span class="o">&gt;</span> <span class="mh">0x7FFFFFFFFFFFFFFF</span><span class="n">i64</span> <span class="o">-</span> <span class="n">Size</span> <span class="p">)</span>
+      <span class="n">sub_4921C0</span><span class="p">(</span><span class="s">&quot;basic_string::append&quot;</span><span class="p">);</span>
+    <span class="n">sub_486EE0</span><span class="p">(</span><span class="o">&amp;</span><span class="n">Memory</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">v28</span><span class="p">,</span> <span class="n">v16</span> <span class="o">-</span> <span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">v28</span><span class="p">);</span>
+    <span class="n">v14</span> <span class="o">=</span> <span class="p">(</span><span class="n">__int128</span> <span class="o">*</span><span class="p">)((</span><span class="kt">char</span> <span class="o">*</span><span class="p">)</span><span class="n">v14</span> <span class="o">+</span> <span class="mi">4</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="c1">// ...</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>This buffer pointed by <code>v41</code> contains the raw bytes of the hash. This hash is updated by the function <code>sub_401BF0(const char* password, char* hash)</code> every time the user-supplied password reaches 32 characters in length.</p>
+<p>Brief pause:</p>
+<blockquote>
+<p>As you see, instead of reverse engineering entire functions and then making sense of the code, our approach could be described as doing inverse data-taining manually and reverse engineering only the necessary bits along the way.</p>
+</blockquote>
+<p>Inside <code>sub_401BF0</code> we attempted to locate where the data copied to the hash pointer <code>v41</code> was coming from. It was being copied from another buffer at address <code>0000000007478000</code> (in that particular execution) which looked "quite suspicious" due to following reasons:</p>
+<ol>
+<li>Hardware breakpoints on memory accesses were not working.</li>
+<li>This buffer was filled right after calling functions from my GPU driver libraries (in my case <code>ig9icd64.dll</code>), most likely just its OpenGL implementation.</li>
+</ol>
+<div class="codehilite"><pre><span></span>                   0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F  0123456789ABCDEF
+0000000007478000  01 00 00 00 01 00 00 00 01 00 00 00 01 00 00 00  ................         
+0000000007478010  01 00 00 00 01 00 00 00 01 00 00 00 01 00 00 00  ................         
+...        
+0000000007478100  E3 5C A9 DE C6 42 8F 29 61 7C A1 5C 44 62 87 AB  ã\©ÞÆB.)a|¡\Db.«         
+0000000007478110  E7 1D B9 DA C2 03 9F 2D 65 3D B1 58 40 23 97 AF  ç.¹ÚÂ..-e=±X@#.¯         
+...
+</pre></div>
+
+
+<p>We suspect GPGPU is coming into play and that compute shaders might be responsible for generating the hash.</p>
+<h2 id="extracting-compute-shaders">Extracting compute shaders</h2>
+<p>Looking at the strings in the executable, it's clear that no compute shader is visible as plaintext. However, rather than inspecting which of the many functions is responsible of decrypting the GLSL source, or trying to locate it somewhere within the user address space. We fetch it from where the application could never hide it: the GPU driver libraries.</p>
+<p>For that purpose we use <a href="http://apitrace.github.io/">Apitrace</a>. We spawn <em>moon.exe</em> with it, in <em>OpenGL</em> mode, fill out a dummy password, close the application and proceed to inspect the list of captured frames. From the long list of frames, most with 1027 calls, we notice one with 1041 calls. As expected, the small difference here is that the application maps shader storage buffer and fills it with <code>GL_COMPUTE_SHADER</code> data.</p>
+<p><img alt="" src="apitrace.png"></p>
+<p>Apitrace provides us the application-supplied source code for the mapped shader, which we auto-formatted for readability reasons. You can read the entire GLSL source code at: <a href="moon.glsl">moon.glsl</a>.</p>
+<p>Next, we will discuss the most important parts of the shader. Firstly, we observed the following input/output buffers:</p>
+<div class="codehilite"><pre><span></span><span class="k">layout</span><span class="p">(</span><span class="n">std430</span><span class="p">,</span> <span class="n">binding</span> <span class="o">=</span> <span class="mo">0</span><span class="p">)</span> <span class="k">buffer</span> <span class="n">shaderExchangeProtocol</span> <span class="p">{</span>
+  <span class="kt">uint</span> <span class="n">state</span><span class="p">[</span><span class="mi">64</span><span class="p">];</span>
+  <span class="kt">uint</span> <span class="n">hash</span><span class="p">[</span><span class="mi">64</span><span class="p">];</span>
+  <span class="kt">uint</span> <span class="n">password</span><span class="p">[</span><span class="mi">32</span><span class="p">];</span>
+<span class="p">};</span>
+</pre></div>
+
+
+<p>The meaning of <code>password</code> is clear from the context. Inspecting the GLSL code we notice that every invocation of the shader results in a <code>uint32_t</code> value being updated in <code>hash[idx]</code>. Similarly, the value <code>state[idx]</code> changes from 1 to 2 to mark that particular task as finished.</p>
+<div class="codehilite"><pre><span></span><span class="k">if</span> <span class="p">((</span><span class="n">idx</span> <span class="o">&amp;</span> <span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="mo">0</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">final</span> <span class="o">=</span> <span class="n">hash_alpha</span><span class="p">(</span><span class="n">password</span><span class="p">[</span><span class="n">idx</span> <span class="o">/</span> <span class="mi">2</span><span class="p">]);</span>
+<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+  <span class="n">final</span> <span class="o">=</span> <span class="n">hash_beta</span><span class="p">(</span><span class="n">password</span><span class="p">[</span><span class="n">idx</span> <span class="o">/</span> <span class="mi">2</span><span class="p">]);</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>For every character in <code>password</code>, two different hashes are computed, <code>hash_alpha</code> and <code>hash_beta</code>, each resulting in a <code>uint32_t</code> value that is stored in the <code>hash</code> buffer after XOR'ing it further. More details on these operations will be given in the following paragraphs.</p>
+<p>Our goal now is to recover the password from the expected hash. Here we noticed two possible approaches, a quick one (which we used in the CTF), and a more elegant one (for the sake of perfectionism and pleasing mathematicians).</p>
+<h2 id="strategy-1-the-hackers-approach">Strategy #1: The Hacker's Approach</h2>
+<p>Every invocation of the compute shader takes into account a <strong>single character</strong> of the password in order to generate a <code>uint32_t</code> value of the hash, except for the final part that interates over the whole password:</p>
+<div class="codehilite"><pre><span></span><span class="kt">uint</span> <span class="n">h</span> <span class="o">=</span> <span class="mh">0x5a</span><span class="p">;</span>
+<span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="o">=</span> <span class="mo">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">32</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kt">uint</span> <span class="n">p</span> <span class="o">=</span> <span class="n">password</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+  <span class="kt">uint</span> <span class="n">r</span> <span class="o">=</span> <span class="p">(</span><span class="n">i</span> <span class="o">*</span> <span class="mi">3</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mi">7</span><span class="p">;</span>
+  <span class="n">p</span> <span class="o">=</span> <span class="p">(</span><span class="n">p</span> <span class="o">&lt;&lt;</span> <span class="n">r</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">p</span> <span class="o">&gt;&gt;</span> <span class="p">(</span><span class="mi">8</span> <span class="o">-</span> <span class="n">r</span><span class="p">));</span>
+  <span class="n">p</span> <span class="o">&amp;=</span> <span class="mh">0xff</span><span class="p">;</span>
+  <span class="n">h</span> <span class="o">^=</span> <span class="n">p</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="n">final</span> <span class="o">^=</span> <span class="p">(</span><span class="n">h</span> <span class="o">|</span> <span class="p">(</span><span class="n">h</span> <span class="o">&lt;&lt;</span> <span class="mi">8</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">h</span> <span class="o">&lt;&lt;</span> <span class="mi">16</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">h</span> <span class="o">&lt;&lt;</span> <span class="mi">24</span><span class="p">));</span>
+</pre></div>
+
+
+<p>However, since <code>p</code> is always masked with 0xFF, <code>h</code> will be in range [0x00, 0xFF]. Thus, there are only 256 possible values with which the <code>final</code> variable could be XOR'ed (e.g. <code>01010101</code>, <code>02020202</code>, etc.). This can be bruteforced by iterating over every possible value of <code>h</code>.</p>
+<ul>
+<li><strong>Bruteforcing algorithm</strong>: For every position <code>i</code> in the password, we try character <code>c</code> and temporarily set <code>password[i] = c</code>. We calculate the first of the two resulting <code>uint32_t</code> hash values (we don't need the second one!) and, as described before, we XOR the result with every of the 256 possible values with which <code>final</code> could be XOR'ed. If there's a match, we keep the character <code>c</code> and move on with the next <code>i</code>.</li>
+</ul>
+<p>Considering a 32-byte password and 256 choices for each <code>c</code> and <code>h</code>, we get the following worst case scenario: 32 * 256 * 256 = 2097152 attempts.</p>
+<p>We could reimplement the whole algorithm again, which would certainly save computing time. But on a CTF, it's <em>our</em> time the one that matters. To solve the challenge as quick as possible time we used <a href="https://www.frida.re/">Frida</a> to instrument <em>moon.exe</em>, and automatically execute the function <code>sub_401BF0</code> for arbitrary passwords. You can find the source code at <a href="bruteforcer.py">bruteforcer.py</a>.</p>
+<p>To explain the code briefly: We allocate the buffers that will hold both the password and hash. We will pass them as arguments to the <em>hashgen</em> function (aka. <code>sub_401BF0</code>), which is transformed into a <code>NativeFunction</code> to be invocated later on directly from our code.</p>
+<div class="codehilite"><pre><span></span><span class="c1">// Buffers </span>
+<span class="kd">var</span> <span class="nx">pswd_ptr</span> <span class="o">=</span> <span class="nx">Memory</span><span class="p">.</span><span class="nx">alloc</span><span class="p">(</span><span class="mh">0x20</span><span class="p">);</span>
+<span class="kd">var</span> <span class="nx">hash_ptr</span> <span class="o">=</span> <span class="nx">Memory</span><span class="p">.</span><span class="nx">alloc</span><span class="p">(</span><span class="mh">0x400</span><span class="p">);</span>
+
+<span class="kd">var</span> <span class="nx">hashgen_ptr</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">NativePointer</span><span class="p">(</span><span class="mh">0x401BF0</span><span class="p">);</span>
+<span class="kd">var</span> <span class="nx">hashgen</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">NativeFunction</span><span class="p">(</span><span class="nx">keygen_ptr</span><span class="p">,</span> <span class="s1">&#39;int&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;pointer&#39;</span><span class="p">,</span> <span class="s1">&#39;pointer&#39;</span><span class="p">]);</span>
+</pre></div>
+
+
+<p>Then, for every choice of <code>i</code>, <code>c</code>, <code>h</code>, we have the following block of code (i.e. deep within three nested loops).</p>
+<div class="codehilite"><pre><span></span><span class="kd">var</span> <span class="nx">maskh</span> <span class="o">=</span> <span class="nx">to_uint32</span><span class="p">(</span><span class="nx">h</span> <span class="o">|</span> <span class="p">(</span><span class="nx">h</span> <span class="o">&lt;&lt;</span> <span class="mi">8</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="nx">h</span> <span class="o">&lt;&lt;</span> <span class="mi">16</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="nx">h</span> <span class="o">&lt;&lt;</span> <span class="mi">24</span><span class="p">));</span>
+<span class="nx">Memory</span><span class="p">.</span><span class="nx">writeU8</span><span class="p">(</span><span class="nx">pswd_ptr</span><span class="p">.</span><span class="nx">add</span><span class="p">(</span><span class="nx">i</span><span class="p">),</span> <span class="nx">c</span><span class="p">);</span>
+<span class="nx">keygen</span><span class="p">(</span><span class="nx">pswd_ptr</span><span class="p">,</span> <span class="nx">hash_ptr</span><span class="p">);</span>
+<span class="kd">var</span> <span class="nx">dword</span> <span class="o">=</span> <span class="nx">Memory</span><span class="p">.</span><span class="nx">readU32</span><span class="p">(</span><span class="nx">hash_ptr</span><span class="p">.</span><span class="nx">add</span><span class="p">(</span><span class="mi">8</span><span class="o">*</span><span class="nx">i</span><span class="p">))</span> <span class="o">^</span> <span class="nx">maskh</span><span class="p">;</span>
+<span class="k">if</span> <span class="p">(</span><span class="nx">to_uint32</span><span class="p">(</span><span class="nx">dword</span><span class="p">)</span> <span class="o">==</span> <span class="nx">to_uint32</span><span class="p">(</span><span class="nx">expected</span><span class="p">[</span><span class="mi">2</span><span class="o">*</span><span class="nx">i</span><span class="p">]))</span> <span class="p">{</span>
+  <span class="nx">valid</span> <span class="o">=</span> <span class="kc">true</span><span class="p">;</span>
+  <span class="k">break</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>After around 1 minute of computing time we obtain the following output. Challenge solved!</p>
+<div class="codehilite"><pre><span></span>CTF{OpenGLMoonMoonG0esT0TheMoon}
+</pre></div>
+
+
+<p>Small addendum:
+<em> Note that we didn't need to understand what <code>hash_alpha</code> and <code>hash_beta</code> were doing. We recovered the entire password just by cleverly bruteforcing over (half of!) the expected hash buffer entries.
+</em> We are aware that <code>h</code> does not need to be bruteforced again for <code>i &gt; 0</code> and by restricting ourselves to printable choices of <code>c</code> we could bring the worst case scenario down to: 32 * (0x7E - 0x20 + 1) + 256 = 3264 attempts (x100 speedup). However, the naive approach was fast enough for us.</p>
+<h2 id="strategy-2-the-mathematicians-approach">Strategy #2: The Mathematician's Approach</h2>
+<p>We start by analyzing <code>hash_alpha</code> and <code>hash_beta</code>. They are identical, except that they access different indices from the vector <code>calc(p)</code>, corresponding to its components X and Y respectively. The function <code>calc</code> converts  character <code>p</code>, interpreted as degrees, to radians stored in the variable <code>r</code>. Then, it computes the following:</p>
+<p><img alt="$$
+  \begin{pmatrix}
+    \cos{r} &amp; -\sin{r} &amp; 0 \
+    \sin{r} &amp; \cos{r} &amp; 0 \
+    0 &amp; 0 &amp; 1 \
+  \end{pmatrix}
+  \cdot
+  \begin{pmatrix} 1024 \ 0 \ 0 \end{pmatrix} +
+  \begin{pmatrix} 2048 \ 2048 \ 0 \end{pmatrix} 
+$$" src="latex-1.png"></p>
+<p>Thus we know that the intermediate values are in range [0, 2048] since:
+<em> </em>X<em>: <code>uint(calc(p)[0]) == 1024*cos(r) + 2048</code>.
+</em> <em>Y</em>: <code>uint(calc(p)[1]) == 1024*sin(r) + 2048</code>.</p>
+<p>Given <em>X</em> and <em>Y</em> we could compute back <code>p</code> via:</p>
+<p><img alt="$$
+  \text{degrees}(\text{atan2}(\frac{Y - 2048}{1024}, \frac{X - 2048}{1024}))
+$$" src="latex-2.png"></p>
+<p>Next, we analyze the <code>extend</code> function:</p>
+<div class="codehilite"><pre><span></span><span class="kt">uint</span> <span class="n">extend</span><span class="p">(</span><span class="kt">uint</span> <span class="n">e</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kt">uint</span> <span class="n">i</span><span class="p">;</span>
+  <span class="kt">uint</span> <span class="n">r</span> <span class="o">=</span> <span class="n">e</span> <span class="o">^</span> <span class="mh">0x5f208c26</span><span class="p">;</span>
+  <span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="o">=</span> <span class="mi">15</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">31</span><span class="p">;</span> <span class="n">i</span> <span class="o">+=</span> <span class="mi">3</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kt">uint</span> <span class="n">f</span> <span class="o">=</span> <span class="n">e</span> <span class="o">&lt;&lt;</span> <span class="n">i</span><span class="p">;</span>
+    <span class="n">r</span> <span class="o">^=</span> <span class="n">f</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="k">return</span> <span class="n">r</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>The argument <code>e</code> is XOR'ed with a constant and then again with multiple copies of itself shifted by some amount. <em>Luckily</em> for us those shifts are larger than 15, that the low 15 bits are left untouched, which is enough to keep or values <em>X</em>,<em>Y</em> undamaged as they are in range [0, 2048].</p>
+<p>This concludes the <code>hash_alpha</code> and <code>hash_beta</code> functions. Next, we analyze the code modifying the <code>final</code> variable inside the <code>main</code> function. The first loop is actually a constant-ish XOR (only depends on the index, which is known), so we are able to revert this as well:</p>
+<div class="codehilite"><pre><span></span><span class="kt">uint</span> <span class="n">i</span><span class="p">;</span>
+<span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="o">=</span> <span class="mo">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">32</span><span class="p">;</span> <span class="n">i</span> <span class="o">+=</span> <span class="mi">6</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">final</span> <span class="o">^=</span> <span class="n">idx</span> <span class="o">&lt;&lt;</span> <span class="n">i</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>For the final part, as mentioned in the previous section, we could try bruteforcing which of the 256 possible values of <code>h</code> is the correct one. However, note that undoing the previous constant XOR's should have yield the values for <em>X</em> and <em>Y</em> whose bits with index #15 to #11 should be zero (since 2048 = 2^11). This indirectly tells you those bits for <code>h</code> which slightly reduces the entropy.</p>
+<p>Putting all together, for some <code>h</code>, the steps to recover the password character at index <code>i</code>, given corresponding hashes <em>A</em> and <em>B</em> are as follow:
+1. Revert the XORs in <code>main</code> for <em>A</em> and <em>B</em>. 
+2. Revert the XOR in <code>extend</code> for <em>A</em> and <em>B</em>.
+3. Compute <code>X = (A ^ 0x5F208C26) &amp; 0x7FFF</code> and <code>Y = (B ^ 0x5F208C26) &amp; 0x7FFF</code>.
+4. Compute <code>c = deg(atan2((Y-2048)/1024, (X-2048)/1024)</code>.
+5. Set <code>password[i] = c</code>.</p>
+<p>Once again, challenge solved!</p>
+<p>There is no code available for this approach since it's not the strategy we followed in the CTF, but we found it quite an elegant approach worthy of discussion.</p>
+        </article>
+        <hr>
+        <footer>
+            <p>
+                Questions? Comments? <a href="https://github.com/AlexAltea/blog/issues">Open an issue!</a>
+            </p>
+            <p><a href="mailto:alexandro@phi.nz">alexandro@phi.nz</a></p>
+        </footer>
+    </body>
+</html>

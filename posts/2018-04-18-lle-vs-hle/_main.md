@@ -1,6 +1,6 @@
 ---
 layout: post
-date: 2018-04-18 00:00:00 UTC
+date: 2018-04-18
 title: LLE vs HLE and their tradeoffs
 author: Alexandro Sanchez
 ---

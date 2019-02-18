@@ -1,0 +1,89 @@
+<!-- This file has been auto-generated! -->
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Fast lookups in JIT-compiled maps</title>
+        <!-- Style -->
+        <link rel="stylesheet" href="../../css/code.css">
+        <link rel="stylesheet" href="../../css/markdown.css">
+        <style>
+            body {
+                box-sizing: border-box;
+                min-width: 200px;
+                max-width: 980px;
+                margin: 0 auto;
+                padding: 45px;
+            }
+
+            header {
+                position: relative;
+            }
+            header > .links {
+                position: absolute;
+                right: 0;
+            }
+
+            .post-key {
+                background-color: hsl(45, 67%, 80%);
+                border-radius: 5px 0px 0px 5px;
+                padding: 2px 6px 2px 8px;
+                margin: 0px;
+            }
+            .post-val {
+                background-color: hsl(45, 67%, 90%);
+                border-radius: 0px 5px 5px 0px;
+                padding: 2px 8px 2px 6px;
+                margin: 0px;
+            }
+
+            footer {
+                text-align: center;
+            }
+        
+            @media (max-width: 767px) {
+                body {
+                    padding: 15px;
+                }
+            }
+        </style>
+    </head>
+    <body class="markdown-body">
+        <header>
+            <div class="links">
+                <span>
+                    <a href="https://twitter.com/AlexAltea">Twitter</a> |
+                    <a href="https://github.com/AlexAltea">Github</a> |
+                    <a href="mailto:alexandro@phi.nz">Email</a>
+                </span>
+            </div>
+            <span><a href="../../">&lt; Other articles</a></span>
+        </header>
+        <article>
+            <h1>Fast lookups in JIT-compiled maps</h1>
+            <p>
+                <span 
+                    class="post-key">Author</span><span
+                    class="post-val">Alexandro Sanchez</span>
+                <span
+                    class="post-key">Date</span><span
+                    class="post-val">2016-09-07</span>
+            </p>
+            <p>This post shows a way of optimizing lookup performance in maps associating integer keys to arbitrary data.</p>
+<h2 id="background">Background</h2>
+<p>Some time ago, I reimplemented the <a href="https://en.wikipedia.org/wiki/RSX_%27Reality_Synthesizer%27">RSX GPU</a> command processor in the emulator, <a href="https://github.com/AlexAltea/nucleus">Nucleus</a>. This GPU is made of several engines, each bound at a specific index (<em>0</em>-<em>7</em>) of the command processor, and each index provides a MMIO register window (<em>0x0</em>-<em>0x1FFC</em>). Commands are 16-bit bitfields containing an index (3-bit) and MMIO offset (13-bit). Recent userland drivers always bound engines to the same indices and there was a limited number valid MMIO offsets, our command processor was just a big hardcoded <em>switch-case</em> mapping commands to corresponding emulator function.</p>
+<p>However, older or custom drivers might bind engines at different indices making our compile-time <em>switch-case</em> useless. Ignoring wasted memory, a static array of 2^16 entries could be a fast solution. Nevertheless, 32-bit or 64-bit commands could have made this impossible. Since lookup times are critical, this yields the question, <strong>what's the fastest way of doing a lookup in a set of sparse commands -or sparse non-random integers- generated at runtime?</strong> Should we use huge static arrays? Should we use hash tables? Which data structure will optimize lookup time?</p>
+<p>Jitter solves this by letting the compiler decide that.</p>
+<hr>
+<p><strong>TODO: More information soon.</strong></p>
+        </article>
+        <hr>
+        <footer>
+            <p>
+                Questions? Comments? <a href="https://github.com/AlexAltea/blog/issues">Open an issue!</a>
+            </p>
+            <p><a href="mailto:alexandro@phi.nz">alexandro@phi.nz</a></p>
+        </footer>
+    </body>
+</html>

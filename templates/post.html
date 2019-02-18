@@ -4,11 +4,9 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>$title</title>
-        <!-- Fonts -->
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Dosis">
         <!-- Style -->
-        <link rel="stylesheet" href="../../common/code.css">
-        <link rel="stylesheet" href="../../common/markdown.css">
+        <link rel="stylesheet" href="../../css/code.css">
+        <link rel="stylesheet" href="../../css/markdown.css">
         <style>
             body {
                 box-sizing: border-box;
@@ -16,6 +14,14 @@
                 max-width: 980px;
                 margin: 0 auto;
                 padding: 45px;
+            }
+
+            header {
+                position: relative;
+            }
+            header > .links {
+                position: absolute;
+                right: 0;
             }
 
             .post-key {
@@ -42,8 +48,18 @@
             }
         </style>
     </head>
-    <body>
-        <article class="markdown-body">
+    <body class="markdown-body">
+        <header>
+            <div class="links">
+                <span>
+                    <a href="https://twitter.com/AlexAltea">Twitter</a> |
+                    <a href="https://github.com/AlexAltea">Github</a> |
+                    <a href="mailto:alexandro@phi.nz">Email</a>
+                </span>
+            </div>
+            <span><a href="../../">&lt; Other articles</a></span>
+        </header>
+        <article>
             <h1>$title</h1>
             <p>
                 <span 
@@ -55,8 +71,12 @@
             </p>
             $content
         </article>
+        <hr>
         <footer>
-            <p><a href="mailto:alexandro@phi.nz">alexandro@phi.nz</a>.</p>
+            <p>
+                Questions? Comments? <a href="https://github.com/AlexAltea/blog/issues">Open an issue!</a>
+            </p>
+            <p><a href="mailto:alexandro@phi.nz">alexandro@phi.nz</a></p>
         </footer>
     </body>
 </html>

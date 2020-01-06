@@ -169,15 +169,7 @@ Increments by one an **arbitrarily long** little-endian integer at `rdi`.
     sbb      rdx,-1
 ```
 
-Toggles between not (`~`) and negation (`-`) based on the value of `rax`.
-```
-if (rax)
-  rdx = ~rdx
-else
-  rdx = -rdx
-```
-
-Note that `rax` is also negated as a side-effect.
+Computes the negation of the 128-bit integer stored in the RDX:RAX registers (thanks Aviya Erenfeld!).
 
 
 ### Snippet 0x0C
@@ -195,7 +187,8 @@ Note that `rax` is also negated as a side-effect.
 ```
 
 Registers `rax`, `rcx` end up with the same value, thanks to distributivity of ROR (with XOR).
-```
+
+```text
 rcx = rax
 rcx = (rcx ^ rbx) >> 13
 rax = (rax >> 13) ^ (rbx >> 13)
@@ -218,7 +211,8 @@ rax = (rax >> 13) ^ (rbx >> 13)
 ```
 
 Registers `rdx`, `rbx` end up with the same value, thanks to distributivity of AND (with XOR) and commutativity of XOR.
-```
+
+```text
 rdx = rbx
 rbx = (rbx & rax) ^ (rcx & rax)  // Associativity of AND
 rax = (rdx & rax) ^ (rcx & rax)  // Commutativity of XOR
@@ -240,7 +234,8 @@ rax = (rdx & rax) ^ (rcx & rax)  // Commutativity of XOR
 ```
 
 Registers `rax`, `rcx` end up with the same value, thanks to DeMorgan's law.
-```
+
+```text
 rcx = rax
 rcx = ~(rcx & rbx)
 rax = ~rax | ~rbx
@@ -257,7 +252,8 @@ rax = ~rax | ~rbx
 ```
 
 Computes the following:
-```
+
+```text
 rsi[0] ^= al
 rsi[1] ^= rsi[0]
 rsi[2] ^= rsi[1]
@@ -376,7 +372,8 @@ Note that this requires the 32 most significant bits in `rax` to be cleared.
 ```
 
 Computes the following:
-```
+
+```text
 rsi := (rax ^ rbx) + (rbx ^ rcx)
 if (overflew(rsi))
     rax := 0
@@ -551,7 +548,8 @@ Computes `rcx := 1337 * rax`.
 ```
 
 Computes the following after corresponding simplifications:
-```
+
+```text
 rax := rax * rcx - rbx * rdx
 rbx := rax * rdx + rbx * rcx
 ```
@@ -640,7 +638,8 @@ Computes `rcx := rax % 2`.
 ```
 
 Register `rax` acts as a counter, and `rcx` loops from 0x100000000 to 0x0. Each iteration will split the `ecx` values in two 16-bit halves, *x* and *y*, and verify the following property:
-```
+
+```text
 (x*x + y*y) >> 20 == 1
 ```
 
@@ -1053,7 +1052,8 @@ This works by decreasing the number and replicating the most-significant non-zer
 ```
 
 The goal seems to be replacing each byte in the `rax` register with 0x00 if non-zero, or with 0x80 if zero. For instance:
-```
+
+```text
 0102030400000000 => 8080808000000000
 0500060007000800 => 8000800080008000
 0000FFFE00000102 => 0000808000008080
@@ -1061,7 +1061,8 @@ The goal seems to be replacing each byte in the `rax` register with 0x00 if non-
 ```
 
 However, 0x01 bytes followed exclusively by 0x00 or 0x01 bytes to their right are an exception and will be replaced with 0x80 as well, since substracting both the carried bit and the 0x01 byte will turn them into a negative byte. For instance:
-```
+
+```text
 0100000000000000 => 8080808080808080
 0101000000000000 => 8080808080808080
 FF01010000000000 => 0080808080808080
@@ -1249,7 +1250,7 @@ Computes the direction of the lines in the (Heighway) Dragon Curve by computing 
 
 This snippet computes:
 
-```
+```text
 rsi = ((rax & (rax - 1)) % 3)
 rdx = ((rax | (rax - 1)) % 3) + 1
 rdi = (rdx == 3) ? 0 : rdx;

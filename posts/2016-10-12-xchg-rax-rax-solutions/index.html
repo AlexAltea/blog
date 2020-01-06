@@ -193,15 +193,7 @@
 </pre></div>
 
 
-<p>Toggles between not (<code>~</code>) and negation (<code>-</code>) based on the value of <code>rax</code>.</p>
-<div class="codehilite"><pre><span></span>if (rax)
-  rdx = ~rdx
-else
-  rdx = -rdx
-</pre></div>
-
-
-<p>Note that <code>rax</code> is also negated as a side-effect.</p>
+<p>Computes the negation of the 128-bit integer stored in the RDX:RAX registers (thanks Aviya Erenfeld!).</p>
 <h3 id="snippet-0x0c">Snippet 0x0C</h3>
 <div class="codehilite"><pre><span></span>    <span class="nf">mov</span>      <span class="no">rcx</span><span class="p">,</span><span class="no">rax</span>
     <span class="nf">xor</span>      <span class="no">rcx</span><span class="p">,</span><span class="no">rbx</span>

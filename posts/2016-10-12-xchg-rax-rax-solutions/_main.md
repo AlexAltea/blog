@@ -145,7 +145,7 @@ Note that it prevents overflow issues since `rcr` does a 33-bit rotation using t
 
 Computes `rax := (rax + 4) / 8`.
 
-Note this is computing `rax / 8` and rounding to the nearest integer (thanks [@ZaneH](https://github.com/ZaneH)).
+This calculates `rax / 8` and rounding to the nearest integer (thanks [@ZaneH](https://github.com/ZaneH)).
 
 
 ### Snippet 0x0A
@@ -261,7 +261,9 @@ rsi[3] ^= rsi[2]
 ...
 ```
 
-This resembles a 8-bit CBC encryption scheme using `al` as IV, except for the fact that it uses the identity function as block cipher encryption instead of a pseudorandom function.
+This resembles a 8-bit CBC encryption scheme using `al` as IV, except that it uses the identity function for block cipher encryption, not a pseudorandom function with a key. Instead, the IV plays the role as key.
+
+This was the staple home-made "crypto" in the early 80s home computer era.
 
 
 ### Snippet 0x10
@@ -313,6 +315,8 @@ Compares two buffers `rsi` and `rdi` of length `rcx`. Assuming `al` is zero-init
 
 Computes `(rax | rdx) + (rax & rdx)`, which can be simplified to `rax + rdx`.
 
+See also Rich Schroeppel's *Item 23* in [HAKMEM](https://en.wikipedia.org/wiki/HAKMEM).
+
 
 ### Snippet 0x13
 
@@ -343,7 +347,7 @@ See also: https://en.wikipedia.org/wiki/Adder_(electronics)
     add      rax,rcx
 ```
 
-Computes the average rounded to the lowest integer, i.e. `rax := floor((rax + rdx) / 2)`.
+Computes the average rounded to the lowest integer, i.e. `rax := floor((rax + rdx) / 2)`, avoiding overflows (see also Snippet 0x08).
 
 
 ### Snippet 0x15
@@ -446,7 +450,7 @@ The return value of `.skip` is the address to the hardcoded string, and due to t
     pop      rax
 ```
 
-Gets the `rip` register after the call instruction, i.e. `rax := .next`.
+Gets the `rip` register after the call instruction, i.e. `rax := .next`. This is needed to obtain the current instruction pointer under [Position-Independent Code](https://en.wikipedia.org/wiki/Position-independent_code).
 
 
 ### Snippet 0x1B
@@ -465,7 +469,7 @@ Indirect branch to `rax`. Since there's no immediate arguments to cause further 
     pop      rsp
 ```
 
-Swaps the stack pointer with the address at the top of the current stack.
+Swaps the stack pointer with the address at the top of the current stack. One of the many stack pivot gadgets used during [Return-Oriented Programming](https://en.wikipedia.org/wiki/Return-oriented_programming).
 
 
 ### Snippet 0x1D
@@ -557,6 +561,9 @@ rbx := rax * rdx + rbx * rcx
 This corresponds to the multiplication of two complex numbers:
 (a + bi) * (c + di) = (ac - bd) + (ad + bc)i.
 
+Note that it is using only three multiplications to calculate the four distinct
+products in the result. This is the essence of the [Karatsuba Algorithm] for polynomial multiplication (thanks [@eleemosynator](https://twitter.com/eleemosynator)).
+
 
 ### Snippet 0x22
 
@@ -612,7 +619,28 @@ Computes `rax := rax % 3`.
 .exit_loop:
 ```
 
-Computes `rcx := rax % 2`.
+This computes the multiplicative inverse of `rax` modulo 2<sup>64</sup> using the Newton-Raphson algorithm, which we can write
+as follows:
+
+```c
+uint64_t multiplicative_inverse_mod_2_64(uint64_t x)
+{
+	uint64_t z = x;
+	uint64_t t = 0;
+	do {
+		t = x * z;
+		z = z * (2 - t);
+	} while (t > 1);
+	return z;
+}
+```
+
+This paper has a good analysis: https://arxiv.org/pdf/1209.6626.pdf.
+
+Notice also that the loop exit condition takes advantage of the intermediate multiplication `x * z` to early out and also avoid
+having to maintain a separate loop counter. Also note that the loop condition is checked at the end - this trades off the cost
+of an extra couple of operations at the end of the algorithm against adding an extra branch which would be more expensive on
+modern architectures (thanks [@eleemosynator](https://twitter.com/eleemosynator)).
 
 
 ### Snippet 0x25

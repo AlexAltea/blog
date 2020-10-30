@@ -1112,25 +1112,8 @@ This works by decreasing the number and replicating the most-significant non-zer
     and      rax,rdx
 ```
 
-The goal seems to be replacing each byte in the `rax` register with 0x00 if non-zero, or with 0x80 if zero. For instance:
-
-```text
-0102030400000000 => 8080808000000000
-0500060007000800 => 8000800080008000
-0000FFFE00000102 => 0000808000008080
-...
-```
-
-However, 0x01 bytes followed exclusively by 0x00 or 0x01 bytes to their right are an exception and will be replaced with 0x80 as well, since substracting both the carried bit and the 0x01 byte will turn them into a negative byte. For instance:
-
-```text
-0100000000000000 => 8080808080808080
-0101000000000000 => 8080808080808080
-FF01010000000000 => 0080808080808080
-...
-```
-
-*TODO: It's not clear whether this is a bug, or a feature.*
+Another one from [Bithacks]: [Determine if a word has a zero byte](https://graphics.stanford.edu/~seander/bithacks.html#ZeroInWord).
+Allows one to scan for the location of a zero (ASCIIZ terminator for example) by loading one machine word at a time.
 
 
 ### Snippet 0x38
@@ -1157,7 +1140,37 @@ FF01010000000000 => 0080808080808080
     or       rax,rdx
 ```
 
-*TODO: No idea about this one.*
+This mind-blowing bit of code calculates the next biggest integer with the same weight (number of set bits). For example, it produces
+the following sequences (feeding it its previous output every step):
+
+  1, 2, 4, 8, 16, 32, ... (powers of 2 are the weight-1 sequence)
+  0b11, 0b101, 0b110, 0b1001, 0b1010, 0b1100, ...
+  0b111, 0b1011, 0b1101, 0b1110, 0b10011, ...
+
+Try it in python (requires [gmpy2]).
+
+```Python
+# Snippet 0x38 - Calculate the successor of same weight
+import gmpy2
+
+def next_by_weight(x):
+    l = gmpy2.bit_scan1(x)
+    d = x | (x - 1)
+    x = d + 1
+    d = (d + 1) & ~d
+    x |= (d - 1) >> (1 + l)
+    return x
+
+def show_sequence(x):
+    for i in xrange(10):
+        print gmpy2.popcount(x), bin(x)
+        x = next_by_weight(x)
+
+show_sequence(1)
+show_sequence(3)
+show_sequence(7)
+show_sequence(15)
+```
 
 
 ### Snippet 0x39
@@ -1336,3 +1349,4 @@ rax = bsf(rax)
 [Bit Reversal Permutation]:https://en.wikipedia.org/wiki/Bit-reversal_permutation
 [FFT]:https://en.wikipedia.org/wiki/Cooley%E2%80%93Tukey_FFT_algorithm
 [Bithacks]:https://graphics.stanford.edu/~seander/bithacks.html
+[gmpy2]:https://pypi.org/project/gmpy2/

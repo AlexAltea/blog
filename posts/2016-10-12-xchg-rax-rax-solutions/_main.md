@@ -595,8 +595,8 @@ Computes `rax := rax / 3` rounding to the closest integer.
     sub      rax,rdx
 ```
 
-Computes `rax := rax % 3` by using: _2<sup>2k</sup> = 1 (_ mod _3)_ and _2^<sup>2k+1</sup>=  2 (_ mod _3)_, hence in order to
-calculate `rax mod 3` one sum the digits of the number written in base four (i.e. sum that pairs of bits at even locations) and
+Computes `rax := rax % 3` by using: _2<sup>2k</sup> = 1 (_ mod _3)_ and _2<sup>2k+1</sup>=  2 (_ mod _3)_, hence in order to
+calculate `rax mod 3` one can sum the digits of the number written in base four (i.e. sum that pairs of bits at even locations) and
 take the result mod 3. There is also a cute bit of code at the end that does the final reduction modulo 3 without any branches.
 
 
@@ -914,7 +914,11 @@ This snippet computes `((((rax & rdx) - rdx) & rdx) - 1) & rdx`. This expression
     xor      rdx,rcx
 ```
 
-Finds the highest power of two dividing `rax + 1` by computing: `((rax >> 1) ^ rax) ^ (((rax + 1) >> 1) ^ (rax + 1))`. This corresponds to the sequence: [A006519](https://oeis.org/A006519) as `rax` increases. The first terms are: 1, 2, 1, 4, 1, 2, 1, 8, 1, 2, 1, 4, ...
+The code is nicely laid out in four stanzas to give us a hint of what's going on. The first and third calculate `x^(x>>1)` which
+transforms an index to the corresponding [Gray Code] sequence element (see also Sloane's [A003188]). Hence the whole snippet
+will calculate the `xor` of two successive Gray Codes. These will differ in exactly one bit which corresponds to the highest power
+of 2 that divides `x+1` (Sloane's [A006519](https://oeis.org/A006519)). This is also equivalient to `~x&(x+1)`.
+
 
 
 ### Snippet 0x32
@@ -1323,5 +1327,7 @@ rax = bsf(rax)
 [Karatsuba Algorithm]:https://en.wikipedia.org/wiki/Karatsuba_algorithm
 [Galois LFSR]:https://en.wikipedia.org/wiki/Linear-feedback_shift_register
 [Floyd's Algorithm]:https://en.wikipedia.org/wiki/Cycle_detection#Floyd.27s_Tortoise_and_Hare
+[Gray Code]:https://en.wikipedia.org/wiki/Gray_code
 [@eleemosynator]:https://twitter.com/eleemosynator
 [Movfuscator]:https://github.com/xoreaxeaxeax/movfuscator
+[A003188]:https://oeis.org/A003188

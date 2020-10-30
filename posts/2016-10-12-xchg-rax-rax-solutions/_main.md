@@ -145,7 +145,7 @@ Note that it prevents overflow issues since `rcr` does a 33-bit rotation using t
 
 Computes `rax := (rax + 4) / 8`.
 
-This calculates `rax / 8` and rounding to the nearest integer (thanks [@ZaneH](https://github.com/ZaneH)).
+This calculates `rax / 8` rounded to the nearest integer (thanks [@ZaneH](https://github.com/ZaneH)).
 
 
 ### Snippet 0x0A
@@ -595,7 +595,9 @@ Computes `rax := rax / 3` rounding to the closest integer.
     sub      rax,rdx
 ```
 
-Computes `rax := rax % 3`.
+Computes `rax := rax % 3` by using: _2<sup>2k</sup> = 1 (_ mod _3)_ and _2^<sup>2k+1</sup>=  2 (_ mod _3)_, hence in order to
+calculate `rax mod 3` one sum the digits of the number written in base four (i.e. sum that pairs of bits at even locations) and
+take the result mod 3. There is also a cute bit of code at the end that does the final reduction modulo 3 without any branches.
 
 
 ### Snippet 0x24
@@ -637,8 +639,8 @@ This paper has a good analysis: https://arxiv.org/pdf/1209.6626.pdf.
 
 Notice also that the loop exit condition takes advantage of the intermediate multiplication `x * z` to early out and also avoid
 having to maintain a separate loop counter. Also note that the loop condition is checked at the end - this trades off the cost
-of an extra couple of operations at the end of the algorithm against adding an extra branch which would be more expensive on
-modern architectures. 
+of an extra couple of operations at the end of the algorithm against adding an extra branch in the middle of the loop
+which would be more expensive on modern architectures. 
 (thanks [@eleemosynator])
 
 ### Snippet 0x25
@@ -701,7 +703,7 @@ Rotates the value in the `rax` register 7 bits to the right. Equivalent to `ror 
 ```
 
 This is just `rax >> (floor(cl / 2) + floor((cl + 1) / 2))` which will be identical to `rax >> cl` when `cl` is below 64.
-After that really weird things start to happen.
+<!-- After that really weird things start to happen. Produce more analysis for this? -->
 
 <!--
 
@@ -778,26 +780,45 @@ For instance, let `rcx :=  4` and `rbx` point to *[Q0, Q1, Q2, Q3, Q4]* with qua
     jnz      .loop2
 ```
 
-This snippet expects `rbx` pointing to a table of 256 `uint8_t` entries, each containing an index to the next element thus forming a linked list. The first loop can be represented by the following expression:
+Cycle-finding using [Floyd's Algorithm].
+This snippet assumes that `rbx` points to a table of values of a function that has a single byte argument and single byte value.
+Consider the sequence _x<sub>n</sub>=f(x<sub>n-1</sub>)_. For any starting value this sequence will eventually start cycling as _f_
+only takes 256 distinct values and has no memory. 
+The first half of the snippet executes Floyd's Tortoise and Hare algorithm to find a collision point inside the cycle and the second
+part locates the head of the cycle which is the result of the snippet. To see this, assume that the sequence has a starting segment
+of length _l_ followed by a cycle of length _n_. If our Tortoise and Hare collide at step _s_, then their locations within the cycle must
+be identical and we must have:
 
-```cpp
-unsigned char i = 0;
-while (rbx[i] != rbx[rbx[i]]) {
-  i = rbx[i];
+<p align="center"> <i>s - l = 2 s - l (</i>mod<i> n) => s = 0 (</i>mod<i> n)</i></p>
+
+Which implies that the Tortoise's location within the cycle is equal to _-l_ modulo _n_, Hence, if we start another Tortoise from the
+initial point and have both Tortoises walk at the same rate, they will collide at the head of the cycle.
+
+<!--
+ For example, for the function _f(x) = 5 + x<sup>2</sup>(_ mod _256)_ when starting from 0 we
+get: _0, 5, 30, 137, 86, 233, 22, 233, 22, ..._ --> 
+ In `C` this looks like:
+
+```c
+typedef unsigned char byte;
+
+byte snippet_0x2b(byte *tbl, byte x0)	// tbl in EBX, x0 is set zero
+{
+   byte t, h;                         // Tortoise and Hare
+   t = h = x0;
+   do {
+       t = tbl[t];
+       h = tbl[tbl[h]];
+    } while (t != h);
+
+    for (byte t2 = x0; t2 != t;) {
+       t  = tbl[t];
+       t2 = tbl[t2];
+    }
+
+    return t;
 }
 ```
-
-This will traverse the linked list and find the first entry pointing to itself. Obviously, this relies in the assumption that no table entry points to an index occurring previously in the chain as this would result in an endless loop (similar to cycles in linked lists). To prevent this scenario, this table pointed by `rbx` should have been initialized by `rbx[i] = i` for *i* in *[0, 255]*. The second loop can be represented by the following expression:
-
-```cpp
-unsigned char j = 0;
-while (rbx[j] != rbx[i]) {
-  j = rbx[j];
-}
-```
-
-Since `i == rbx[i]`, this loop will necessarily terminate and the linked list will be traversed again until the last element is reached. 
-
 
 ### Snippet 0x2C
 
@@ -812,6 +833,9 @@ Since `i == rbx[i]`, this loop will necessarily terminate and the linked list wi
 ```
 
 This will move `rsi` or `rdi` into `rax` depending on whether `rcx` and `rdx` are different or not, respectively. This is equivalent to: `rax := (rcx == rdx) ? rdi : rsi`. This assumes that all `rbx`-relative offsets point to valid memory.
+A comparison and conditional move implemented using just `mov` instructions. The [Movfuscator] project takes this concept to a whole
+new extreme and delivers a `C` compiler the produces binaries which only contain `mov` instructions (with a tiny amount of cheating
+for loops).
 
 
 ### Snippet 0x2D
@@ -1179,12 +1203,14 @@ This snippet computes:
 
 ```cpp
 if (eax >= 0)
-    eax = (eax * 2)
+    eax <<= 1;
 else
-    eax = (eax * 2) ^ 0xC0000401
+    eax = (eax << 1) ^ 0xC0000401
 ```
 
-*TODO: Is there anything else special about this snippet?*
+This snippet calculates the next state of a [Galois LFSR] with characteristic polynomial `0x1C000401`
+_(x<sup>32</sup> + x<sup>31</sup> + x<sup>30</sup> + x<sup>10</sup> + 1)_. As this polynomial is primitive, the LFSR will cycle
+through all non-zero 32-bit integers. It also uses the mask-and trick to avoid using a branch.
 
 
 ### Snippet 0x3C
@@ -1295,4 +1321,7 @@ rax = bsf(rax)
 [HAKMEM]:https://en.wikipedia.org/wiki/HAKMEM
 [Position-Independent Code]:https://en.wikipedia.org/wiki/Position-independent_code
 [Karatsuba Algorithm]:https://en.wikipedia.org/wiki/Karatsuba_algorithm
+[Galois LFSR]:https://en.wikipedia.org/wiki/Linear-feedback_shift_register
+[Floyd's Algorithm]:https://en.wikipedia.org/wiki/Cycle_detection#Floyd.27s_Tortoise_and_Hare
 [@eleemosynator]:https://twitter.com/eleemosynator
+[Movfuscator]:https://github.com/xoreaxeaxeax/movfuscator

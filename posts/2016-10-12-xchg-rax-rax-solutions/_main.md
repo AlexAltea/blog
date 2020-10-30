@@ -941,7 +941,7 @@ distributive property of AND over XOR: `(popcnt(x^(x>>1))&1) ^ (x&1)`. Now the f
 of index `x` (lowest bit of weight tells us if there are an even or odd number of set bits) and the second part is the lowest bit of
 `x` and they will always be equal. One way to see this is to think of the parity as the XOR of all the bits in an integer, hence
 in calculating the parity of `x^(x>>1)` every bit of `x` will appear twice except for bit 0 which is shifted off the bottom and only
-shows up once. Another way to see this is by inspecting the Gray Code inversion formula which we'll meet later.
+shows up once. Another way to see this is by inspecting the Gray Code inversion formula which we are about to meet.
 
 
 ### Snippet 0x33
@@ -972,7 +972,7 @@ shows up once. Another way to see this is by inspecting the Gray Code inversion 
     xor      rax,rdx
 ```
 
-Defines a permutation of 64-bit integers where each `rax` value is mapped into the corresponding 64-bit Grey-code. This corresponds to the sequence [A006068](https://oeis.org/A006068) and it's computed via:
+Maps a [Gray Code] to its corresponding sequence number. This is the inverse operation of `x^(x>>1)`.
 
 ```cpp
 rax := (rax >> 0x01) ^ rax

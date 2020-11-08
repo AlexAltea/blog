@@ -712,17 +712,9 @@ Rotates the value in the `rax` register 7 bits to the right. Equivalent to `ror 
 
 This is just `rax >> (floor(cl / 2) + floor((cl + 1) / 2))` which will be identical to `rax >> cl` when `cl` is below 64.
 Once `cl` exceeds 64, this snippet will return 0 whereas `rax >> cl` will return `rax` shifted right by `cl % 64`. They will
-then come back in line once `cl` exceeds 128.
-<!-- After that really weird things start to happen. Produce more analysis for this? -->
+then come back in line once `cl` exceeds 128, and then the whole process will repeat itself. Sometimes, two halves do not a whole make.
+<!-- include the jittage example? -->
 
-<!--
-
-This computes: `rax := rax >> ((cl >> 1) + ((cl + 1) >> 1))` which is equivalent to `rax := rax / 2**T(cl)`, where *T(n) := n(n+1)/2* represents the *n*-th [triangular number](https://en.wikipedia.org/wiki/Triangular_number).
-
-The denominator in the expression above corresponds to the sequence [A006125](https://oeis.org/A006125) as `cl` increases.
-
-*TODO: Is there anything else special about this snippet?*
--->
 
 ### Snippet 0x28
 

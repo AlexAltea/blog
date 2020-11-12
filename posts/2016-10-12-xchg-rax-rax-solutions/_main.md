@@ -1313,13 +1313,20 @@ Computes the direction of the lines in the (Heighway) Dragon Curve by computing 
     bsf      rax,r8
 ```
 
-This snippet computes:
+This snippet takes a counter as input in `rax` and return two numbers between 0 and 2 in `rsi` and `rdi` and a number between 0 and 63
+in `rax`. The use of `rsi` and `rdi` is probably a hint as they are the source index and destination index registers indicating that
+something is to be moved from one position to another. If we draw the outputs for successive values of `rax` we get:
 
-```text
-rsi = ((rax & (rax - 1)) % 3)
-rdx = ((rax | (rax - 1)) % 3) + 1
-rdi = (rdx == 3) ? 0 : rdx;
-rax = bsf(rax)
-```
+<p align="center">
+    <img src="xorpd_0x3f_hanoi.png"/>
+</p>
 
-*TODO: No idea about this one.*
+This sequence is the solution to the [Towers of Hanoi](https://en.wikipedia.org/wiki/Tower_of_Hanoi), and the snippet above implements its [binary solution](https://en.wikipedia.org/wiki/Tower_of_Hanoi#Binary_solution).
+
+According to the legend, there is a hidden monastery in Hanoi which contains a large room with three time-worn posts and 64 golden disks. The monks, all sworn to secrecy, have been following rules of the *Towers of Hanoi* and moving the disks one at a time from peg to peg. It is said that when they have completed the sequence and all 64 golden disks are the middle peg then the universe will finally come to an end.
+
+How appropriate then that the 64th and last snippet in the book solves a 64-disk Hanoi puzzle which once completed will signal the end of the universe. However there is one strange quirk - the third stanza that calculates the destination peg does something like `(((m | m - 1) + 1) % 3 + 1) % 3` where the second reduction modulo 3 is done using the `cmp/sbb/and` pattern. Why not just increment `m | m - 1` before the first reduction? It turns out that doing so would give the wrong destination for several of the end-game moves as `m | m - 1` would become 2<sup>64</sup>-1 and hence increment to zero instead of the intended 1.
+
+The monks of Hanoi need not worry, if they follow the instructions of this snippet the universe will come to an orderly end as originally intended.
+
+(thanks [@eleemosynator](https://twitter.com/eleemosynator))

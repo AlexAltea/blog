@@ -809,7 +809,9 @@ Since `i == rbx[i]`, this loop will necessarily terminate and the linked list wi
     mov      rax,qword [rbx + 8*rax]
 ```
 
-This will move `rsi` or `rdi` into `rax` depending on whether `rcx` and `rdx` are different or not, respectively. This is equivalent to: `rax := (rcx == rdx) ? rdi : rsi`. This assumes that all `rbx`-relative offsets point to valid memory.
+This will move `rsi` or `rdi` into `rax` depending on whether `rcx` and `rdx` are different or not, respectively. This is equivalent to: `rax := (rcx == rdx) ? rdi : rsi`. This assumes that all `rbx`-relative offsets point to valid memory. Effectively a comparison and conditional move implemented using just `mov` instructions.
+
+The [M/o/Vfuscator](https://github.com/xoreaxeaxeax/movfuscator) project takes this concept to a whole new extreme and delivers a C compiler the produces binaries which only contain `mov` instructions (with a tiny amount of cheating for loops).
 
 
 ### Snippet 0x2D
@@ -1213,7 +1215,17 @@ else
     sub      rdx,rbx
 ```
 
-*TODO: No idea about this one.*
+This snippet expects a number in `rax` and returns two outputs which are -1, 1 or 0 in `rax` and `rdx`. If we interpret the input as a sequence number and the outputs as steps in two dimensions (i.e. *dx* and *dy*) we can draw the result: 
+
+<p align="center">
+    <img src="xorpd_0x3c_hilbert.png" width="512"/>
+</p>
+
+This truly mind-blowing snippet draws a [Hilbert Curve](https://en.wikipedia.org/wiki/Hilbert_curve) in 21 assembly instructions without using recursion or branches. You can experiment with the Python implementation of the algorithm in [xorpd_0x3c_hilbert.py](./xorpd_0x3c_hilbert.py) (requires [Pillow](https://pillow.readthedocs.io/en/stable/)).
+
+<!-- TODO: Write an explanation of why this works -->
+
+(thanks [@eleemosynator](https://twitter.com/eleemosynator))
 
 
 ### Snippet 0x3D
@@ -1235,7 +1247,31 @@ else
     jnz      .loop
 ```
 
-*TODO: No idea about this one.*
+The registers `rax` and `rdx` serve both as inputs and outputs of this snippet. Starting it at (0, 0) and treating the results as points in the 2D plane, we get the following pattern:
+
+<p align="center">
+    <img src="xorpd_0x3d_morton.png"/>
+</p>
+
+This is the [Morton Curve](https://en.wikipedia.org/wiki/Z-order_curve) or *Z-order curve*. It's based around the idea of visiting all points on the 2D plane in a hierarchical nearest-neighbour Z-pattern. To understand the generation algorithm consider the following method for incrementing an integer with *N* bits:
+
+* For *k* in [0, *N*-1]:
+  * Flip bit *k* of the integer
+  * If the bit transitioned from 0 to 1 then STOP
+  
+The loop in the algorithm above tracks the propagation of the carry with the loop exiting when it finds a 0 bit that can finally absorb the carry by turning into a 1. Expressed in the same language, the algorithm in the snippet does the following (naming the inputs *x* and *y*):
+
+* For *k* in [0, *N*-1]:
+  * Flip bit *k* of *x*
+  * If the bit transitioned from 0 to 1 then STOP
+  * Flip bit *k* of *y*
+  * If the bit transitioned from 0 to 1 then STOP
+
+We have exactly the same carry-propagation structure except that the carry propagates from bit *k* of *x* to bit *k* of *y* before moving up to bit *k+1* of *x*. This operation is exactly equivalent to incrementing an integer that is constructed by interleaving the bits of *x* and *y*, with the bits of *x* taking the even positions and the bits of *y* on the odd positions.
+
+Both the snippet version and the interleaved increment version of the algorithm are implemented in the Python script [xorpd_0x3d_morton.py](./xorpd_0x3d_morton.py) (requires [Pillow](https://pillow.readthedocs.io/en/stable/)).
+
+(thanks [@eleemosynator](https://twitter.com/eleemosynator))
 
 
 ### Snippet 0x3E

@@ -1240,13 +1240,17 @@ See also: http://supertech.csail.mit.edu/papers/debruijn.pdf
 This snippet computes:
 
 ```cpp
-if (eax >= 0)
-    eax = (eax * 2)
+if (eax & (1 << 31))
+    eax = (eax << 1) ^ 0xC0000401
 else
-    eax = (eax * 2) ^ 0xC0000401
+    eax <<= 1;
 ```
 
-*TODO: Is there anything else special about this snippet?*
+This snippet calculates the next state of a [Galois LFSR](https://en.wikipedia.org/wiki/Linear-feedback_shift_register) with characteristic polynomial `0x1C000401`
+_(x<sup>32</sup> + x<sup>31</sup> + x<sup>30</sup> + x<sup>10</sup> + 1)_. As this polynomial is primitive, the LFSR will cycle
+through all non-zero 32-bit integers. It also uses the `cdq` trick to expand the top bit into a mask which it then ands with the polynomial constant in order to avoid using a branch.
+
+(thanks [@eleemosynator](https://twitter.com/eleemosynator))
 
 
 ### Snippet 0x3C

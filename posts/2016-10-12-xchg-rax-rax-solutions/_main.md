@@ -1025,7 +1025,7 @@ See also: https://en.wikipedia.org/wiki/Gray_code
     or       eax,ecx
 ```
 
-The snippet is made of five blocks, each aggregating and adding pairs of consecutive ranges of adjacent bits from the `rax` register. The size of this ranges in each block are respectively: 1, 2, 4, 8 and 16 bits.
+[Bit Reversal Permutation](https://en.wikipedia.org/wiki/Bit-reversal_permutation) - the cornerstone of [FFT](https://en.wikipedia.org/wiki/Cooley%E2%80%93Tukey_FFT_algorithm) algorithms. From the [Bithacks](https://graphics.stanford.edu/~seander/bithacks.html) page: https://graphics.stanford.edu/~seander/bithacks.html#ReverseParallel.
 
 
 ### Snippet 0x35

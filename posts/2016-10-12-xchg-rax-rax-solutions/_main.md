@@ -1143,7 +1143,53 @@ Allows one to scan for the location of a zero (ASCIIZ terminator for example) by
     or       rax,rdx
 ```
 
-*TODO: No idea about this one.*
+This little gem calculates the next biggest integer with the same weight (number of set bits). For example, it produces
+the following sequences (feeding it its previous output every step):
+
+ -  1, 2, 4, 8, 16, 32, ... (powers of 2 are the weight-1 sequence)
+ -  0b11, 0b101, 0b110, 0b1001, 0b1010, 0b1100, ...
+ -  0b111, 0b1011, 0b1101, 0b1110, 0b10011, ...
+
+Try it in python:
+
+```Python
+# Snippet 0x38 - Calculate the successor of same weight
+from __future__ import print_function
+
+def bsf(x):
+    n = 0
+    while not (x & 1):
+        x >>= 1
+        n += 1
+    return n
+
+def popcount(x):
+    n = 0
+    while x:
+        n += 1
+        x &= (x - 1)	# Clear the bottom-most set bit - c.f. snippet 0x2f
+    return n
+
+def next_in_weight_class(x):
+    l = bsf(x)
+    d = x | (x - 1)
+    x = d + 1
+    d = (d + 1) & ~d
+    x |= (d - 1) >> (1 + l)
+    return x
+
+def show_sequence(x, n=10):
+    for i in range(n):
+        print(popcount(x), bin(x))
+        x = next_in_weight_class(x)
+
+# Show first few weight classes
+
+for w in range(1, 5):
+    show_sequence((1 << w) - 1)   # First element of a weight class w repunit(w) = 2^w - 1
+```
+
+(thanks [@eleemosynator](https://twitter.com/eleemosynator))
 
 
 ### Snippet 0x39

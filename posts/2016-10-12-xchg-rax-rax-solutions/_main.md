@@ -935,7 +935,13 @@ of 2 that divides `x+1` (Sloane's [A006519](https://oeis.org/A006519)). This is 
     and      rax,1
 ```
 
-This computes `rax := (popcnt((rax >> 1) ^ rax) ^ rax) & 1` where *popcnt* computes the number of `1`-bits. This evaluates to `0` for all inital values of `rax`.
+The [Gray Code](https://en.wikipedia.org/wiki/Gray_code) is at the center of this one as well. The snippet calculates `(popcnt(x^(x>>1))^x) & 1` where `popcnt` counts
+the number of set bits in a register (population count, sometimes also referred to as weight). We can unpack this by using the
+distributive property of AND over XOR: `(popcnt(x^(x>>1))&1) ^ (x&1)`. Now the first part is just the parity of the Gray Code
+of index `x` (lowest bit of weight tells us if there are an even or odd number of set bits) and the second part is the lowest bit of
+`x` and they will always be equal. One way to see this is to think of the parity as the XOR of all the bits in an integer, hence
+in calculating the parity of `x^(x>>1)` every bit of `x` will appear twice except for bit 0 which is shifted off the bottom and only
+shows up once. Another way to see this is by inspecting the Gray Code inversion formula which we are about to meet in the next snippet.
 
 
 ### Snippet 0x33

@@ -1062,9 +1062,8 @@ See also: https://en.wikipedia.org/wiki/Gray_code
     add      eax,edx
 ```
 
-The snippet is made of five blocks, each aggregating and adding pairs of consecutive ranges of adjacent bits from the `rax` register. The size of this ranges in each block are respectively: 1, 2, 4, 8 and 16 bits.
-
-See also: Snippet 0x34.
+The basic Population Count algorithm (count the number of set bits in an word). There is a marginally better implementation on the
+[Bithacks](https://graphics.stanford.edu/~seander/bithacks.html) page that uses a cheeky subtraction step at the start and fewer ANDs: https://graphics.stanford.edu/~seander/bithacks.html#CountBitsSetParallel
 
 
 ### Snippet 0x36

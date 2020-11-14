@@ -1,9 +1,9 @@
 from __future__ import print_function
 from PIL import Image, ImageDraw, ImageColor
 
-n = 5	                # Generation number
-mg = 32			# Image magnification (line segment size)
-width = 3		# Line width
+n = 5      # Generation number
+mg = 32    # Image magnification (line segment size)
+width = 3  # Line width
 
 def morton(n):
     pos = [ 0, 0 ]
@@ -67,5 +67,4 @@ def draw_morton(n, mg, width, color='black'):
 
 img = draw_morton(5, mg=16, color='black', width=1)
 img.show()
-img.save('xorpd_3d_morton.png', optimize=True, dpi=(150, 150))
-
+img.save('xorpd_0x3d_morton.png', optimize=True, dpi=(150, 150))

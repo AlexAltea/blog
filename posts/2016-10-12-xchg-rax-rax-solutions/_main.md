@@ -966,7 +966,7 @@ This computes `rax := (popcnt((rax >> 1) ^ rax) ^ rax) & 1` where *popcnt* compu
     xor      rax,rdx
 ```
 
-Defines a permutation of 64-bit integers where each `rax` value is mapped into the corresponding 64-bit Grey-code. This corresponds to the sequence [A006068](https://oeis.org/A006068) and it's computed via:
+Maps a [Gray Code] to its corresponding sequence number. This is the inverse operation of `x^(x>>1)`. See also snippet 0x31.
 
 ```cpp
 rax := (rax >> 0x01) ^ rax

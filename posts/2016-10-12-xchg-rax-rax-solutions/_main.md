@@ -1115,25 +1115,8 @@ This works by decreasing the number and replicating the most-significant non-zer
     and      rax,rdx
 ```
 
-The goal seems to be replacing each byte in the `rax` register with 0x00 if non-zero, or with 0x80 if zero. For instance:
-
-```text
-0102030400000000 => 8080808000000000
-0500060007000800 => 8000800080008000
-0000FFFE00000102 => 0000808000008080
-...
-```
-
-However, 0x01 bytes followed exclusively by 0x00 or 0x01 bytes to their right are an exception and will be replaced with 0x80 as well, since substracting both the carried bit and the 0x01 byte will turn them into a negative byte. For instance:
-
-```text
-0100000000000000 => 8080808080808080
-0101000000000000 => 8080808080808080
-FF01010000000000 => 0080808080808080
-...
-```
-
-*TODO: It's not clear whether this is a bug, or a feature.*
+Another one from [Bithacks](https://graphics.stanford.edu/~seander/bithacks.html): [Determine if a word has a zero byte](https://graphics.stanford.edu/~seander/bithacks.html#ZeroInWord).
+Allows one to scan for the location of a zero (ASCIIZ terminator for example) by loading one machine word at a time.
 
 
 ### Snippet 0x38

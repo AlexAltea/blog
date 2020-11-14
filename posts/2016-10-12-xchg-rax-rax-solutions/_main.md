@@ -966,7 +966,7 @@ This computes `rax := (popcnt((rax >> 1) ^ rax) ^ rax) & 1` where *popcnt* compu
     xor      rax,rdx
 ```
 
-Maps a [Gray Code] to its corresponding sequence number. This is the inverse operation of `x^(x>>1)`. See also snippet 0x31.
+Maps a [Gray Code](https://en.wikipedia.org/wiki/Gray_code) to its corresponding sequence number. This is the inverse operation of `x^(x>>1)`. See also snippet 0x31.
 
 ```cpp
 rax := (rax >> 0x01) ^ rax

@@ -912,7 +912,13 @@ This snippet computes `((((rax & rdx) - rdx) & rdx) - 1) & rdx`. This expression
     xor      rdx,rcx
 ```
 
-Finds the highest power of two dividing `rax + 1` by computing: `((rax >> 1) ^ rax) ^ (((rax + 1) >> 1) ^ (rax + 1))`. This corresponds to the sequence: [A006519](https://oeis.org/A006519) as `rax` increases. The first terms are: 1, 2, 1, 4, 1, 2, 1, 8, 1, 2, 1, 4, ...
+The snippet is nicely laid out in four stanzas to give us a hint of what's going on. The first and third calculate `x^(x>>1)` which
+transforms an index to the corresponding [Gray Code](https://en.wikipedia.org/wiki/Gray_code) sequence element (see also Sloane's [A003188](https://oeis.org/A003188)). Hence the whole snippet
+will calculate the `xor` of two consecutive Gray Codes. These will differ in exactly one bit which corresponds to the highest power
+of 2 that divides `x+1` (Sloane's [A006519](https://oeis.org/A006519)). This is also equivalent to `~x&(x+1)`.
+
+(thanks [@eleemosynator](https://twitter.com/eleemosynator))
+
 
 
 ### Snippet 0x32

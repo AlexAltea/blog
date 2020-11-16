@@ -703,12 +703,10 @@ Rotates the value in the `rax` register 7 bits to the right. Equivalent to `ror 
     shr      rax,cl
 ```
 
-This computes: `rax := rax >> ((cl >> 1) + ((cl + 1) >> 1))` which is equivalent to `rax := rax / 2**T(cl)`, where *T(n) := n(n+1)/2* represents the *n*-th [triangular number](https://en.wikipedia.org/wiki/Triangular_number).
-
-The denominator in the expression above corresponds to the sequence [A006125](https://oeis.org/A006125) as `cl` increases.
-
-*TODO: Is there anything else special about this snippet?*
-
+This is `rax >> (floor(cl / 2) + floor((cl + 1) / 2))` which will be identical to `rax >> cl` when `cl` is below 64.
+Once `cl` exceeds 64, this snippet will return 0 whereas `rax >> cl` will return `rax` shifted right by `cl % 64`. They will
+then come back in line once `cl` exceeds 128, and then the whole process will repeat itself. Sometimes, two halves do not a whole make.
+<!-- include the jittage example? -->
 
 ### Snippet 0x28
 
@@ -776,25 +774,47 @@ For instance, let `rcx :=  4` and `rbx` point to *[Q0, Q1, Q2, Q3, Q4]* with qua
     jnz      .loop2
 ```
 
-This snippet expects `rbx` pointing to a table of 256 `uint8_t` entries, each containing an index to the next element thus forming a linked list. The first loop can be represented by the following expression:
+Cycle-finding using [Floyd's Algorithm](https://en.wikipedia.org/wiki/Cycle_detection#Floyd.27s_Tortoise_and_Hare).
+This snippet assumes that `rbx` points to a table of values of a function that has a single byte argument and single byte value.
+Consider the sequence _x<sub>n</sub>=f(x<sub>n-1</sub>)_. For any starting value this sequence will eventually start cycling as _f_
+only takes 256 distinct values and has no memory. 
+The first half of the snippet executes Floyd's Tortoise and Hare algorithm to find a collision point inside the cycle and the second
+part locates the head of the cycle which is the result of the snippet. To see this, assume that the sequence has a starting segment
+of length _l_ followed by a cycle of length _n_. If our Tortoise and Hare collide at step _s_, then their locations within the cycle must
+be identical and we must have:
 
-```cpp
-unsigned char i = 0;
-while (rbx[i] != rbx[rbx[i]]) {
-  i = rbx[i];
+<p align="center"> <i>s - l = 2 s - l (</i>mod<i> n) => s = 0 (</i>mod<i> n)</i></p>
+
+Which implies that the Tortoise's location within the cycle is equal to _-l_ modulo _n_, Hence, if we start another Tortoise from the
+initial point and have both Tortoises walk at the same rate, they will collide at the head of the cycle.
+
+<!--
+ For example, for the function _f(x) = 5 + x<sup>2</sup>(_ mod _256)_ when starting from 0 we
+get: _0, 5, 30, 137, 86, 233, 22, 233, 22, ..._ --> 
+ In `C` this looks like:
+
+```c
+typedef unsigned char byte;
+
+byte snippet_0x2b(byte *tbl, byte x0)	// tbl in EBX, x0 is set zero
+{
+   byte t, h;                         // Tortoise and Hare
+   t = h = x0;
+   do {
+       t = tbl[t];
+       h = tbl[tbl[h]];
+    } while (t != h);
+
+    for (byte t2 = x0; t2 != t;) {
+       t  = tbl[t];
+       t2 = tbl[t2];
+    }
+
+    return t;
 }
 ```
 
-This will traverse the linked list and find the first entry pointing to itself. Obviously, this relies in the assumption that no table entry points to an index occurring previously in the chain as this would result in an endless loop (similar to cycles in linked lists). To prevent this scenario, this table pointed by `rbx` should have been initialized by `rbx[i] = i` for *i* in *[0, 255]*. The second loop can be represented by the following expression:
-
-```cpp
-unsigned char j = 0;
-while (rbx[j] != rbx[i]) {
-  j = rbx[j];
-}
-```
-
-Since `i == rbx[i]`, this loop will necessarily terminate and the linked list will be traversed again until the last element is reached. 
+(thanks [@eleemosynator](https://twitter.com/eleemosynator))
 
 
 ### Snippet 0x2C
@@ -890,7 +910,13 @@ This snippet computes `((((rax & rdx) - rdx) & rdx) - 1) & rdx`. This expression
     xor      rdx,rcx
 ```
 
-Finds the highest power of two dividing `rax + 1` by computing: `((rax >> 1) ^ rax) ^ (((rax + 1) >> 1) ^ (rax + 1))`. This corresponds to the sequence: [A006519](https://oeis.org/A006519) as `rax` increases. The first terms are: 1, 2, 1, 4, 1, 2, 1, 8, 1, 2, 1, 4, ...
+The snippet is nicely laid out in four stanzas to give us a hint of what's going on. The first and third calculate `x^(x>>1)` which
+transforms an index to the corresponding [Gray Code](https://en.wikipedia.org/wiki/Gray_code) sequence element (see also Sloane's [A003188](https://oeis.org/A003188)). Hence the whole snippet
+will calculate the `xor` of two consecutive Gray Codes. These will differ in exactly one bit which corresponds to the highest power
+of 2 that divides `x+1` (Sloane's [A006519](https://oeis.org/A006519)). This is also equivalent to `~x&(x+1)`.
+
+(thanks [@eleemosynator](https://twitter.com/eleemosynator))
+
 
 
 ### Snippet 0x32
@@ -907,7 +933,13 @@ Finds the highest power of two dividing `rax + 1` by computing: `((rax >> 1) ^ r
     and      rax,1
 ```
 
-This computes `rax := (popcnt((rax >> 1) ^ rax) ^ rax) & 1` where *popcnt* computes the number of `1`-bits. This evaluates to `0` for all inital values of `rax`.
+The [Gray Code](https://en.wikipedia.org/wiki/Gray_code) is at the center of this one as well. The snippet calculates `(popcnt(x^(x>>1))^x) & 1` where `popcnt` counts
+the number of set bits in a register (population count, sometimes also referred to as weight). We can unpack this by using the
+distributive property of AND over XOR: `(popcnt(x^(x>>1))&1) ^ (x&1)`. Now the first part is just the parity of the Gray Code
+of index `x` (lowest bit of weight tells us if there are an even or odd number of set bits) and the second part is the lowest bit of
+`x` and they will always be equal. One way to see this is to think of the parity as the XOR of all the bits in an integer, hence
+in calculating the parity of `x^(x>>1)` every bit of `x` will appear twice except for bit 0 which is shifted off the bottom and only
+shows up once. Another way to see this is by inspecting the Gray Code inversion formula which we are about to meet in the next snippet.
 
 
 ### Snippet 0x33
@@ -938,7 +970,7 @@ This computes `rax := (popcnt((rax >> 1) ^ rax) ^ rax) & 1` where *popcnt* compu
     xor      rax,rdx
 ```
 
-Defines a permutation of 64-bit integers where each `rax` value is mapped into the corresponding 64-bit Grey-code. This corresponds to the sequence [A006068](https://oeis.org/A006068) and it's computed via:
+Maps a [Gray Code](https://en.wikipedia.org/wiki/Gray_code) to its corresponding sequence number. This is the inverse operation of `x^(x>>1)`. See also snippet 0x31.
 
 ```cpp
 rax := (rax >> 0x01) ^ rax
@@ -991,7 +1023,7 @@ See also: https://en.wikipedia.org/wiki/Gray_code
     or       eax,ecx
 ```
 
-The snippet is made of five blocks, each aggregating and adding pairs of consecutive ranges of adjacent bits from the `rax` register. The size of this ranges in each block are respectively: 1, 2, 4, 8 and 16 bits.
+[Bit Reversal Permutation](https://en.wikipedia.org/wiki/Bit-reversal_permutation) - the cornerstone of [FFT](https://en.wikipedia.org/wiki/Cooley%E2%80%93Tukey_FFT_algorithm) algorithms. From the [Bithacks](https://graphics.stanford.edu/~seander/bithacks.html) page: https://graphics.stanford.edu/~seander/bithacks.html#ReverseParallel.
 
 
 ### Snippet 0x35
@@ -1028,9 +1060,8 @@ The snippet is made of five blocks, each aggregating and adding pairs of consecu
     add      eax,edx
 ```
 
-The snippet is made of five blocks, each aggregating and adding pairs of consecutive ranges of adjacent bits from the `rax` register. The size of this ranges in each block are respectively: 1, 2, 4, 8 and 16 bits.
-
-See also: Snippet 0x34.
+The basic Population Count algorithm (count the number of set bits in an word). There is a marginally better implementation on the
+[Bithacks](https://graphics.stanford.edu/~seander/bithacks.html) page that uses a cheeky subtraction step at the start and fewer ANDs: https://graphics.stanford.edu/~seander/bithacks.html#CountBitsSetParallel
 
 
 ### Snippet 0x36
@@ -1082,25 +1113,8 @@ This works by decreasing the number and replicating the most-significant non-zer
     and      rax,rdx
 ```
 
-The goal seems to be replacing each byte in the `rax` register with 0x00 if non-zero, or with 0x80 if zero. For instance:
-
-```text
-0102030400000000 => 8080808000000000
-0500060007000800 => 8000800080008000
-0000FFFE00000102 => 0000808000008080
-...
-```
-
-However, 0x01 bytes followed exclusively by 0x00 or 0x01 bytes to their right are an exception and will be replaced with 0x80 as well, since substracting both the carried bit and the 0x01 byte will turn them into a negative byte. For instance:
-
-```text
-0100000000000000 => 8080808080808080
-0101000000000000 => 8080808080808080
-FF01010000000000 => 0080808080808080
-...
-```
-
-*TODO: It's not clear whether this is a bug, or a feature.*
+Another one from [Bithacks](https://graphics.stanford.edu/~seander/bithacks.html): [Determine if a word has a zero byte](https://graphics.stanford.edu/~seander/bithacks.html#ZeroInWord).
+Allows one to scan for the location of a zero (ASCIIZ terminator for example) by loading one machine word at a time.
 
 
 ### Snippet 0x38
@@ -1127,7 +1141,53 @@ FF01010000000000 => 0080808080808080
     or       rax,rdx
 ```
 
-*TODO: No idea about this one.*
+This little gem calculates the next biggest integer with the same weight (number of set bits). For example, it produces
+the following sequences (feeding it its previous output every step):
+
+ -  1, 2, 4, 8, 16, 32, ... (powers of 2 are the weight-1 sequence)
+ -  0b11, 0b101, 0b110, 0b1001, 0b1010, 0b1100, ...
+ -  0b111, 0b1011, 0b1101, 0b1110, 0b10011, ...
+
+Try it in python:
+
+```Python
+# Snippet 0x38 - Calculate the successor of same weight
+from __future__ import print_function
+
+def bsf(x):
+    n = 0
+    while not (x & 1):
+        x >>= 1
+        n += 1
+    return n
+
+def popcount(x):
+    n = 0
+    while x:
+        n += 1
+        x &= (x - 1)	# Clear the bottom-most set bit - c.f. snippet 0x2f
+    return n
+
+def next_in_weight_class(x):
+    l = bsf(x)
+    d = x | (x - 1)
+    x = d + 1
+    d = (d + 1) & ~d
+    x |= (d - 1) >> (1 + l)
+    return x
+
+def show_sequence(x, n=10):
+    for i in range(n):
+        print(popcount(x), bin(x))
+        x = next_in_weight_class(x)
+
+# Show first few weight classes
+
+for w in range(1, 5):
+    show_sequence((1 << w) - 1)   # First element of a weight class w repunit(w) = 2^w - 1
+```
+
+(thanks [@eleemosynator](https://twitter.com/eleemosynator))
 
 
 ### Snippet 0x39
@@ -1178,13 +1238,17 @@ See also: http://supertech.csail.mit.edu/papers/debruijn.pdf
 This snippet computes:
 
 ```cpp
-if (eax >= 0)
-    eax = (eax * 2)
+if (eax & (1 << 31))
+    eax = (eax << 1) ^ 0xC0000401
 else
-    eax = (eax * 2) ^ 0xC0000401
+    eax <<= 1;
 ```
 
-*TODO: Is there anything else special about this snippet?*
+This snippet calculates the next state of a [Galois LFSR](https://en.wikipedia.org/wiki/Linear-feedback_shift_register) with characteristic polynomial `0x1C000401`
+_(x<sup>32</sup> + x<sup>31</sup> + x<sup>30</sup> + x<sup>10</sup> + 1)_. As this polynomial is primitive, the LFSR will cycle
+through all non-zero 32-bit integers. It also uses the `cdq` trick to expand the top bit into a mask which it then ands with the polynomial constant in order to avoid using a branch.
+
+(thanks [@eleemosynator](https://twitter.com/eleemosynator))
 
 
 ### Snippet 0x3C

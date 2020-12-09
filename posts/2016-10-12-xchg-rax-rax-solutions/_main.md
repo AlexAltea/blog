@@ -718,7 +718,7 @@ then come back in line once `cl` exceeds 128, and then the whole process will re
     loop     .loop
 ```
 
-Left-shifts by one an entire buffer at `rsi` with a length of `rcx` bytes. This can also be interpreted as left-shifting by one, i.e. dividing by two, an **arbitrarily long** big-endian `8*rcx`-bit integer at `rsi`.
+Right-shifts by one an entire buffer at `rsi` with a length of `rcx` bytes. This can also be interpreted as right-shifting by one, i.e. dividing by two, an **arbitrarily long** big-endian `8*rcx`-bit integer at `rsi`.
 
 
 ### Snippet 0x29

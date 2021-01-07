@@ -1250,6 +1250,10 @@ through all non-zero 32-bit integers. It also uses the `cdq` trick to expand the
 
 (thanks [@eleemosynator](https://twitter.com/eleemosynator))
 
+Common in pseudo-random number generators and guarantees a period of 2<sup>32</sup>&minus;1. Several coefficients satisfy this property, though their number of terms in thir characteristic polynomial may vary. Similarly, coefficients for generators of period 2<sup>64</sup>&minus;1 exist as well. Libraries such as [NoMSVCRT](https://skanthak.homepage.t-online.de/nomsvcrt.html) rely on this pattern, see `cntr32` and `cntr64`.
+
+(thanks [@DamianFekete](https://github.com/DamianFekete))
+
 
 ### Snippet 0x3C
 

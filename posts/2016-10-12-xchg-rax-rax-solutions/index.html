@@ -93,7 +93,7 @@
 <p>[1] <a href="http://www.xorpd.net/pages/xchg_rax/snip_00.html">http://www.xorpd.net/pages/xchg_rax/snip_00.html</a></p>
 <h2 id="solutions">Solutions</h2>
 <h3 id="snippet-0x00">Snippet 0x00</h3>
-<div class="codehilite"><pre><span></span>    <span class="nf">xor</span>      <span class="no">eax</span><span class="p">,</span><span class="no">eax</span>
+<div class="codehilite"><pre><span></span><code>    <span class="nf">xor</span>      <span class="no">eax</span><span class="p">,</span><span class="no">eax</span>
     <span class="nf">lea</span>      <span class="no">rbx</span><span class="p">,[</span><span class="mi">0</span><span class="p">]</span>
     <span class="nf">loop</span>     <span class="no">$</span>
     <span class="nf">mov</span>      <span class="no">rdx</span><span class="p">,</span><span class="mi">0</span>
@@ -101,101 +101,89 @@
     <span class="nf">sub</span>      <span class="no">edi</span><span class="p">,</span><span class="no">edi</span>
     <span class="nf">push</span>     <span class="mi">0</span>
     <span class="nf">pop</span>      <span class="no">rbp</span>
-</pre></div>
-
+</code></pre></div>
 
 <p>Different ways of setting several general purpose registers to <em>0</em>.</p>
 <h3 id="snippet-0x01">Snippet 0x01</h3>
-<div class="codehilite"><pre><span></span><span class="nl">.loop:</span>
+<div class="codehilite"><pre><span></span><code><span class="nl">.loop:</span>
     <span class="nf">xadd</span>     <span class="no">rax</span><span class="p">,</span><span class="no">rdx</span>
     <span class="nf">loop</span>     <span class="no">.loop</span>
-</pre></div>
-
+</code></pre></div>
 
 <p>Computes the <code>rcx</code>-th term of the Fibonacci sequence, assuming the initial state <code>rax=0</code>, <code>rdx=1</code>.</p>
 <h3 id="snippet-0x02">Snippet 0x02</h3>
-<div class="codehilite"><pre><span></span>    <span class="nf">neg</span>      <span class="no">rax</span>
+<div class="codehilite"><pre><span></span><code>    <span class="nf">neg</span>      <span class="no">rax</span>
     <span class="nf">sbb</span>      <span class="no">rax</span><span class="p">,</span><span class="no">rax</span>
     <span class="nf">neg</span>      <span class="no">rax</span>
-</pre></div>
-
+</code></pre></div>
 
 <p>Boolean cast: <code>rax := bool(rax)</code>, i.e. <code>rax := rax ? 1 : 0</code>.</p>
 <h3 id="snippet-0x03">Snippet 0x03</h3>
-<div class="codehilite"><pre><span></span>    <span class="nf">sub</span>      <span class="no">rdx</span><span class="p">,</span><span class="no">rax</span>
+<div class="codehilite"><pre><span></span><code>    <span class="nf">sub</span>      <span class="no">rdx</span><span class="p">,</span><span class="no">rax</span>
     <span class="nf">sbb</span>      <span class="no">rcx</span><span class="p">,</span><span class="no">rcx</span>
     <span class="nf">and</span>      <span class="no">rcx</span><span class="p">,</span><span class="no">rdx</span>
     <span class="nf">add</span>      <span class="no">rax</span><span class="p">,</span><span class="no">rcx</span>
-</pre></div>
-
+</code></pre></div>
 
 <p>Minimum function: <code>rax := min(rax, rdx)</code>.</p>
 <h3 id="snippet-0x04">Snippet 0x04</h3>
-<div class="codehilite"><pre><span></span>    <span class="nf">xor</span>      <span class="no">al</span><span class="p">,</span><span class="mi">0x20</span>
-</pre></div>
+<div class="codehilite"><pre><span></span><code>    <span class="nf">xor</span>      <span class="no">al</span><span class="p">,</span><span class="mi">0x20</span>
+</code></pre></div>
 
-
-<p>Replaces uppercase with lowercase characters and viceversa.</p>
+<p>Replaces uppercase with lowercase characters and vice-versa.</p>
 <h3 id="snippet-0x05">Snippet 0x05</h3>
-<div class="codehilite"><pre><span></span>    <span class="nf">sub</span>      <span class="no">rax</span><span class="p">,</span><span class="mi">5</span>
+<div class="codehilite"><pre><span></span><code>    <span class="nf">sub</span>      <span class="no">rax</span><span class="p">,</span><span class="mi">5</span>
     <span class="nf">cmp</span>      <span class="no">rax</span><span class="p">,</span><span class="mi">4</span>
-</pre></div>
-
+</code></pre></div>
 
 <p>Allows to branch depending on whether <code>rax</code> is in range <em>[5,9]</em> using only one <code>jbe</code> jump.</p>
 <h3 id="snippet-0x06">Snippet 0x06</h3>
-<div class="codehilite"><pre><span></span>    <span class="nf">not</span>      <span class="no">rax</span>
+<div class="codehilite"><pre><span></span><code>    <span class="nf">not</span>      <span class="no">rax</span>
     <span class="nf">inc</span>      <span class="no">rax</span>
     <span class="nf">neg</span>      <span class="no">rax</span>
-</pre></div>
-
+</code></pre></div>
 
 <p>Does nothing since the instructions cancel each other.</p>
 <h3 id="snippet-0x07">Snippet 0x07</h3>
-<div class="codehilite"><pre><span></span>    <span class="nf">inc</span>      <span class="no">rax</span>
+<div class="codehilite"><pre><span></span><code>    <span class="nf">inc</span>      <span class="no">rax</span>
     <span class="nf">neg</span>      <span class="no">rax</span>
     <span class="nf">inc</span>      <span class="no">rax</span>
     <span class="nf">neg</span>      <span class="no">rax</span>
-</pre></div>
-
+</code></pre></div>
 
 <p>Does nothing since the instructions cancel each other.</p>
 <h3 id="snippet-0x08">Snippet 0x08</h3>
-<div class="codehilite"><pre><span></span>    <span class="nf">add</span>      <span class="no">rax</span><span class="p">,</span><span class="no">rdx</span>
+<div class="codehilite"><pre><span></span><code>    <span class="nf">add</span>      <span class="no">rax</span><span class="p">,</span><span class="no">rdx</span>
     <span class="nf">rcr</span>      <span class="no">rax</span><span class="p">,</span><span class="mi">1</span>
-</pre></div>
-
+</code></pre></div>
 
 <p>Computes the average, i.e. <code>rax := (rax + rdx) / 2</code>.</p>
 <p>Note that it prevents overflow issues since <code>rcr</code> does a 33-bit rotation using the <code>CF</code> flag.</p>
 <h3 id="snippet-0x09">Snippet 0x09</h3>
-<div class="codehilite"><pre><span></span>    <span class="nf">shr</span>      <span class="no">rax</span><span class="p">,</span><span class="mi">3</span>
+<div class="codehilite"><pre><span></span><code>    <span class="nf">shr</span>      <span class="no">rax</span><span class="p">,</span><span class="mi">3</span>
     <span class="nf">adc</span>      <span class="no">rax</span><span class="p">,</span><span class="mi">0</span>
-</pre></div>
-
+</code></pre></div>
 
 <p>Computes <code>rax := (rax + 4) / 8</code>.</p>
-<p>Note this is computing <code>rax / 8</code> and rounding to the nearest integer (thanks <a href="https://github.com/ZaneH">@ZaneH</a>).</p>
+<p>This calculates <code>rax / 8</code> rounded to the nearest integer (thanks <a href="https://github.com/ZaneH">@ZaneH</a>).</p>
 <h3 id="snippet-0x0a">Snippet 0x0A</h3>
-<div class="codehilite"><pre><span></span>    <span class="nf">add</span>      <span class="no">byte</span> <span class="p">[</span><span class="no">rdi</span><span class="p">],</span><span class="mi">1</span>
+<div class="codehilite"><pre><span></span><code>    <span class="nf">add</span>      <span class="no">byte</span> <span class="p">[</span><span class="no">rdi</span><span class="p">],</span><span class="mi">1</span>
 <span class="nl">.loop:</span>
     <span class="nf">inc</span>      <span class="no">rdi</span>
     <span class="nf">adc</span>      <span class="no">byte</span> <span class="p">[</span><span class="no">rdi</span><span class="p">],</span><span class="mi">0</span>
     <span class="nf">loop</span>     <span class="no">.loop</span>
-</pre></div>
-
+</code></pre></div>
 
 <p>Increments by one an <strong>arbitrarily long</strong> little-endian integer at <code>rdi</code>.</p>
 <h3 id="snippet-0x0b">Snippet 0x0B</h3>
-<div class="codehilite"><pre><span></span>    <span class="nf">not</span>      <span class="no">rdx</span>
+<div class="codehilite"><pre><span></span><code>    <span class="nf">not</span>      <span class="no">rdx</span>
     <span class="nf">neg</span>      <span class="no">rax</span>
     <span class="nf">sbb</span>      <span class="no">rdx</span><span class="p">,-</span><span class="mi">1</span>
-</pre></div>
-
+</code></pre></div>
 
 <p>Computes the negation of the 128-bit integer stored in the RDX:RAX registers (thanks Aviya Erenfeld!).</p>
 <h3 id="snippet-0x0c">Snippet 0x0C</h3>
-<div class="codehilite"><pre><span></span>    <span class="nf">mov</span>      <span class="no">rcx</span><span class="p">,</span><span class="no">rax</span>
+<div class="codehilite"><pre><span></span><code>    <span class="nf">mov</span>      <span class="no">rcx</span><span class="p">,</span><span class="no">rax</span>
     <span class="nf">xor</span>      <span class="no">rcx</span><span class="p">,</span><span class="no">rbx</span>
     <span class="nf">ror</span>      <span class="no">rcx</span><span class="p">,</span><span class="mi">0xd</span>
 
@@ -204,18 +192,16 @@
     <span class="nf">xor</span>      <span class="no">rax</span><span class="p">,</span><span class="no">rbx</span>
 
     <span class="nf">cmp</span>      <span class="no">rax</span><span class="p">,</span><span class="no">rcx</span>
-</pre></div>
-
+</code></pre></div>
 
 <p>Registers <code>rax</code>, <code>rcx</code> end up with the same value, thanks to distributivity of ROR (with XOR).</p>
-<div class="codehilite"><pre><span></span>rcx = rax
+<div class="codehilite"><pre><span></span><code>rcx = rax
 rcx = (rcx ^ rbx) &gt;&gt; 13
 rax = (rax &gt;&gt; 13) ^ (rbx &gt;&gt; 13)
-</pre></div>
-
+</code></pre></div>
 
 <h3 id="snippet-0x0d">Snippet 0x0D</h3>
-<div class="codehilite"><pre><span></span>    <span class="nf">mov</span>      <span class="no">rdx</span><span class="p">,</span><span class="no">rbx</span>
+<div class="codehilite"><pre><span></span><code>    <span class="nf">mov</span>      <span class="no">rdx</span><span class="p">,</span><span class="no">rbx</span>
 
     <span class="nf">xor</span>      <span class="no">rbx</span><span class="p">,</span><span class="no">rcx</span>
     <span class="nf">and</span>      <span class="no">rbx</span><span class="p">,</span><span class="no">rax</span>
@@ -225,18 +211,16 @@ rax = (rax &gt;&gt; 13) ^ (rbx &gt;&gt; 13)
     <span class="nf">xor</span>      <span class="no">rax</span><span class="p">,</span><span class="no">rdx</span>
 
     <span class="nf">cmp</span>      <span class="no">rax</span><span class="p">,</span><span class="no">rbx</span>
-</pre></div>
-
+</code></pre></div>
 
 <p>Registers <code>rdx</code>, <code>rbx</code> end up with the same value, thanks to distributivity of AND (with XOR) and commutativity of XOR.</p>
-<div class="codehilite"><pre><span></span>rdx = rbx
+<div class="codehilite"><pre><span></span><code>rdx = rbx
 rbx = (rbx &amp; rax) ^ (rcx &amp; rax)  // Associativity of AND
 rax = (rdx &amp; rax) ^ (rcx &amp; rax)  // Commutativity of XOR
-</pre></div>
-
+</code></pre></div>
 
 <h3 id="snippet-0x0e">Snippet 0x0E</h3>
-<div class="codehilite"><pre><span></span>    <span class="nf">mov</span>      <span class="no">rcx</span><span class="p">,</span><span class="no">rax</span>
+<div class="codehilite"><pre><span></span><code>    <span class="nf">mov</span>      <span class="no">rcx</span><span class="p">,</span><span class="no">rax</span>
     <span class="nf">and</span>      <span class="no">rcx</span><span class="p">,</span><span class="no">rbx</span>
     <span class="nf">not</span>      <span class="no">rcx</span>
 
@@ -245,36 +229,33 @@ rax = (rdx &amp; rax) ^ (rcx &amp; rax)  // Commutativity of XOR
     <span class="nf">or</span>       <span class="no">rax</span><span class="p">,</span><span class="no">rbx</span>
 
     <span class="nf">cmp</span>      <span class="no">rax</span><span class="p">,</span><span class="no">rcx</span>
-</pre></div>
-
+</code></pre></div>
 
 <p>Registers <code>rax</code>, <code>rcx</code> end up with the same value, thanks to DeMorgan's law.</p>
-<div class="codehilite"><pre><span></span>rcx = rax
+<div class="codehilite"><pre><span></span><code>rcx = rax
 rcx = ~(rcx &amp; rbx)
 rax = ~rax | ~rbx
-</pre></div>
-
+</code></pre></div>
 
 <h3 id="snippet-0x0f">Snippet 0x0F</h3>
-<div class="codehilite"><pre><span></span><span class="nl">.loop:</span>
+<div class="codehilite"><pre><span></span><code><span class="nl">.loop:</span>
     <span class="nf">xor</span>      <span class="no">byte</span> <span class="p">[</span><span class="no">rsi</span><span class="p">],</span><span class="no">al</span>
     <span class="nf">lodsb</span>
     <span class="nf">loop</span>     <span class="no">.loop</span>
-</pre></div>
-
+</code></pre></div>
 
 <p>Computes the following:</p>
-<div class="codehilite"><pre><span></span>rsi[0] ^= al
+<div class="codehilite"><pre><span></span><code>rsi[0] ^= al
 rsi[1] ^= rsi[0]
 rsi[2] ^= rsi[1]
 rsi[3] ^= rsi[2]
 ...
-</pre></div>
+</code></pre></div>
 
-
-<p>This resembles a 8-bit CBC encryption scheme using <code>al</code> as IV, except for the fact that it uses the identity function as block cipher encryption instead of a pseudorandom function.</p>
+<p>This resembles a 8-bit CBC encryption scheme using <code>al</code> as IV, except that it uses the identity function for block cipher encryption, not a pseudorandom function with a key. Instead, the IV plays the role as key.</p>
+<p>This was the staple home-made "crypto" in the early 80s home computer era.</p>
 <h3 id="snippet-0x10">Snippet 0x10</h3>
-<div class="codehilite"><pre><span></span>    <span class="nf">push</span>     <span class="no">rax</span>
+<div class="codehilite"><pre><span></span><code>    <span class="nf">push</span>     <span class="no">rax</span>
     <span class="nf">push</span>     <span class="no">rcx</span>
     <span class="nf">pop</span>      <span class="no">rax</span>
     <span class="nf">pop</span>      <span class="no">rcx</span>
@@ -289,85 +270,78 @@ rsi[3] ^= rsi[2]
     <span class="nf">neg</span>      <span class="no">rcx</span>
 
     <span class="nf">xchg</span>     <span class="no">rax</span><span class="p">,</span><span class="no">rcx</span>
-</pre></div>
-
+</code></pre></div>
 
 <p>Different ways of swapping the contents of <code>rax</code> and <code>rcx</code>.</p>
 <h3 id="snippet-0x11">Snippet 0x11</h3>
-<div class="codehilite"><pre><span></span><span class="nl">.loop:</span>
+<div class="codehilite"><pre><span></span><code><span class="nl">.loop:</span>
     <span class="nf">mov</span>      <span class="no">dl</span><span class="p">,</span><span class="no">byte</span> <span class="p">[</span><span class="no">rsi</span><span class="p">]</span>
     <span class="nf">xor</span>      <span class="no">dl</span><span class="p">,</span><span class="no">byte</span> <span class="p">[</span><span class="no">rdi</span><span class="p">]</span>
     <span class="nf">inc</span>      <span class="no">rsi</span>
     <span class="nf">inc</span>      <span class="no">rdi</span>
     <span class="nf">or</span>       <span class="no">al</span><span class="p">,</span><span class="no">dl</span>
     <span class="nf">loop</span>     <span class="no">.loop</span>
-</pre></div>
-
+</code></pre></div>
 
 <p>Compares two buffers <code>rsi</code> and <code>rdi</code> of length <code>rcx</code>. Assuming <code>al</code> is zero-initialized, it will remain as <em>0</em> unless the buffers differ.</p>
 <h3 id="snippet-0x12">Snippet 0x12</h3>
-<div class="codehilite"><pre><span></span>    <span class="nf">mov</span>      <span class="no">rcx</span><span class="p">,</span><span class="no">rdx</span>
+<div class="codehilite"><pre><span></span><code>    <span class="nf">mov</span>      <span class="no">rcx</span><span class="p">,</span><span class="no">rdx</span>
     <span class="nf">and</span>      <span class="no">rdx</span><span class="p">,</span><span class="no">rax</span>
     <span class="nf">or</span>       <span class="no">rax</span><span class="p">,</span><span class="no">rcx</span>
     <span class="nf">add</span>      <span class="no">rax</span><span class="p">,</span><span class="no">rdx</span>
-</pre></div>
-
+</code></pre></div>
 
 <p>Computes <code>(rax | rdx) + (rax &amp; rdx)</code>, which can be simplified to <code>rax + rdx</code>.</p>
+<p>See also Rich Schroeppel's <em>Item 23</em> in <a href="https://en.wikipedia.org/wiki/HAKMEM">HAKMEM</a>.</p>
 <h3 id="snippet-0x13">Snippet 0x13</h3>
-<div class="codehilite"><pre><span></span>    <span class="nf">mov</span>      <span class="no">rcx</span><span class="p">,</span><span class="mi">0x40</span>
+<div class="codehilite"><pre><span></span><code>    <span class="nf">mov</span>      <span class="no">rcx</span><span class="p">,</span><span class="mi">0x40</span>
 <span class="nl">.loop:</span>
     <span class="nf">mov</span>      <span class="no">rdx</span><span class="p">,</span><span class="no">rax</span>
     <span class="nf">xor</span>      <span class="no">rax</span><span class="p">,</span><span class="no">rbx</span>
     <span class="nf">and</span>      <span class="no">rbx</span><span class="p">,</span><span class="no">rdx</span>
     <span class="nf">shl</span>      <span class="no">rbx</span><span class="p">,</span><span class="mi">0x1</span>
     <span class="nf">loop</span>     <span class="no">.loop</span>
-</pre></div>
-
+</code></pre></div>
 
 <p>Computes <code>rax + rbx</code>.</p>
 <p>See also: https://en.wikipedia.org/wiki/Adder_(electronics)</p>
 <h3 id="snippet-0x14">Snippet 0x14</h3>
-<div class="codehilite"><pre><span></span>    <span class="nf">mov</span>      <span class="no">rcx</span><span class="p">,</span><span class="no">rax</span>
+<div class="codehilite"><pre><span></span><code>    <span class="nf">mov</span>      <span class="no">rcx</span><span class="p">,</span><span class="no">rax</span>
     <span class="nf">and</span>      <span class="no">rcx</span><span class="p">,</span><span class="no">rdx</span>
 
     <span class="nf">xor</span>      <span class="no">rax</span><span class="p">,</span><span class="no">rdx</span>
     <span class="nf">shr</span>      <span class="no">rax</span><span class="p">,</span><span class="mi">1</span>
 
     <span class="nf">add</span>      <span class="no">rax</span><span class="p">,</span><span class="no">rcx</span>
-</pre></div>
+</code></pre></div>
 
-
-<p>Computes the average rounded to the lowest integer, i.e. <code>rax := floor((rax + rdx) / 2)</code>.</p>
+<p>Computes the average rounded to the lowest integer, i.e. <code>rax := floor((rax + rdx) / 2)</code>, avoiding overflows (see also Snippet 0x08).</p>
 <h3 id="snippet-0x15">Snippet 0x15</h3>
-<div class="codehilite"><pre><span></span>    <span class="nf">mov</span>      <span class="no">rdx</span><span class="p">,</span><span class="mi">0xffffffff80000000</span>
+<div class="codehilite"><pre><span></span><code>    <span class="nf">mov</span>      <span class="no">rdx</span><span class="p">,</span><span class="mi">0xffffffff80000000</span>
     <span class="nf">add</span>      <span class="no">rax</span><span class="p">,</span><span class="no">rdx</span>
     <span class="nf">xor</span>      <span class="no">rax</span><span class="p">,</span><span class="no">rdx</span>
-</pre></div>
-
+</code></pre></div>
 
 <p>Casts the <code>int32_t</code> value in <code>eax</code> to an <code>int64_t</code> value in <code>rax</code>.</p>
 <p>Note that this requires the 32 most significant bits in <code>rax</code> to be cleared.</p>
 <h3 id="snippet-0x16">Snippet 0x16</h3>
-<div class="codehilite"><pre><span></span>    <span class="nf">xor</span>      <span class="no">rax</span><span class="p">,</span><span class="no">rbx</span>
+<div class="codehilite"><pre><span></span><code>    <span class="nf">xor</span>      <span class="no">rax</span><span class="p">,</span><span class="no">rbx</span>
     <span class="nf">xor</span>      <span class="no">rbx</span><span class="p">,</span><span class="no">rcx</span>
     <span class="nf">mov</span>      <span class="no">rsi</span><span class="p">,</span><span class="no">rax</span>
     <span class="nf">add</span>      <span class="no">rsi</span><span class="p">,</span><span class="no">rbx</span>
     <span class="nf">cmovc</span>    <span class="no">rax</span><span class="p">,</span><span class="no">rbx</span>
     <span class="nf">xor</span>      <span class="no">rax</span><span class="p">,</span><span class="no">rbx</span>
     <span class="nf">cmp</span>      <span class="no">rax</span><span class="p">,</span><span class="no">rsi</span>
-</pre></div>
-
+</code></pre></div>
 
 <p>Computes the following:</p>
-<div class="codehilite"><pre><span></span>rsi := (rax ^ rbx) + (rbx ^ rcx)
+<div class="codehilite"><pre><span></span><code>rsi := (rax ^ rbx) + (rbx ^ rcx)
 if (overflew(rsi))
     rax := 0
 else
     rax := rax ^ rcx
 cmp(rax, rsi)
-</pre></div>
-
+</code></pre></div>
 
 <p>Observations:
 - If <code>rax</code> == <code>rbx</code>: No overflow.
@@ -377,15 +351,14 @@ cmp(rax, rsi)
 - If <code>rbx</code> == <code>rax&amp;rcx</code>: No overflow.</p>
 <p><em>TODO: No idea about this one.</em></p>
 <h3 id="snippet-0x17">Snippet 0x17</h3>
-<div class="codehilite"><pre><span></span>    <span class="nf">cqo</span>
+<div class="codehilite"><pre><span></span><code>    <span class="nf">cqo</span>
     <span class="nf">xor</span>      <span class="no">rax</span><span class="p">,</span><span class="no">rdx</span>
     <span class="nf">sub</span>      <span class="no">rax</span><span class="p">,</span><span class="no">rdx</span>
-</pre></div>
-
+</code></pre></div>
 
 <p>Computes the absolute value of <code>rax</code>, i.e. <code>rax := abs(rax)</code>.</p>
 <h3 id="snippet-0x18">Snippet 0x18</h3>
-<div class="codehilite"><pre><span></span>    <span class="nf">rdtsc</span>
+<div class="codehilite"><pre><span></span><code>    <span class="nf">rdtsc</span>
     <span class="nf">shl</span>      <span class="no">rdx</span><span class="p">,</span><span class="mi">0x20</span>
     <span class="nf">or</span>       <span class="no">rax</span><span class="p">,</span><span class="no">rdx</span>
     <span class="nf">mov</span>      <span class="no">rcx</span><span class="p">,</span><span class="no">rax</span>
@@ -395,62 +368,56 @@ cmp(rax, rsi)
     <span class="nf">or</span>       <span class="no">rax</span><span class="p">,</span><span class="no">rdx</span>
 
     <span class="nf">cmp</span>      <span class="no">rcx</span><span class="p">,</span><span class="no">rax</span>
-</pre></div>
-
+</code></pre></div>
 
 <p>Compares two consecutively obtained timestamps.</p>
 <p>The instruction <code>rdtsc</code> stores the current 64-bit timestamp counter value in <code>edx:eax</code>, while the <code>shl</code> and <code>or</code> instructions aggregate the halves of each register into <code>rax</code>. Trivially, the second timestamp will always be larger than the first one.</p>
 <h3 id="snippet-0x19">Snippet 0x19</h3>
-<div class="codehilite"><pre><span></span>    <span class="nf">call</span>     <span class="no">.skip</span>
+<div class="codehilite"><pre><span></span><code>    <span class="nf">call</span>     <span class="no">.skip</span>
     <span class="nf">db</span>       <span class="err">&#39;</span><span class="no">hello</span> <span class="no">world</span><span class="p">!</span><span class="err">&#39;</span><span class="p">,</span><span class="mi">0</span>
 <span class="nl">.skip:</span>
     <span class="nf">call</span>     <span class="no">print_str</span>
     <span class="nf">add</span>      <span class="no">rsp</span><span class="p">,</span><span class="mi">8</span>
-</pre></div>
-
+</code></pre></div>
 
 <p>Calls <code>print_str("hello world!");</code>.</p>
 <p>The return value of <code>.skip</code> is the address to the hardcoded string, and due to the stack layout, this will implicitly become the first argument of <code>print_str</code>.</p>
+<p>This was a very common pattern in assembly language programs: The instruction sequence would be generated by a macro allowing coders to embed commands like <code>PRINT_STR 'Hello, world!'</code> in their code without having to define the string in the data segment, assign a symbol to it and then reference from code.</p>
 <h3 id="snippet-0x1a">Snippet 0x1A</h3>
-<div class="codehilite"><pre><span></span>    <span class="nf">call</span>     <span class="no">.next</span>
+<div class="codehilite"><pre><span></span><code>    <span class="nf">call</span>     <span class="no">.next</span>
 <span class="nl">.next:</span>
     <span class="nf">pop</span>      <span class="no">rax</span>
-</pre></div>
+</code></pre></div>
 
-
-<p>Gets the <code>rip</code> register after the call instruction, i.e. <code>rax := .next</code>.</p>
+<p>Gets the <code>rip</code> register after the call instruction, i.e. <code>rax := .next</code>. This is needed to obtain the current instruction pointer in <a href="https://en.wikipedia.org/wiki/Position-independent_code">Position-Independent Code</a>.</p>
 <h3 id="snippet-0x1b">Snippet 0x1B</h3>
-<div class="codehilite"><pre><span></span>    <span class="nf">push</span>     <span class="no">rax</span>
+<div class="codehilite"><pre><span></span><code>    <span class="nf">push</span>     <span class="no">rax</span>
     <span class="nf">ret</span>
-</pre></div>
-
+</code></pre></div>
 
 <p>Indirect branch to <code>rax</code>. Since there's no immediate arguments to cause further stack cleanup, this is equivalent to <code>jmp rax</code>.</p>
 <h3 id="snippet-0x1c">Snippet 0x1C</h3>
-<div class="codehilite"><pre><span></span>    <span class="nf">pop</span>      <span class="no">rsp</span>
-</pre></div>
+<div class="codehilite"><pre><span></span><code>    <span class="nf">pop</span>      <span class="no">rsp</span>
+</code></pre></div>
 
-
-<p>Swaps the stack pointer with the address at the top of the current stack.</p>
+<p>Swaps the stack pointer with the address at the top of the current stack. One of the many stack pivot gadgets used during <a href="https://en.wikipedia.org/wiki/Return-oriented_programming">Return-Oriented Programming</a>.</p>
 <h3 id="snippet-0x1d">Snippet 0x1D</h3>
-<div class="codehilite"><pre><span></span>    <span class="nf">mov</span>      <span class="no">rsp</span><span class="p">,</span><span class="no">buff2</span> <span class="err">+</span> <span class="no">n</span><span class="p">*</span><span class="mi">8</span> <span class="err">+</span> <span class="mi">8</span>
+<div class="codehilite"><pre><span></span><code>    <span class="nf">mov</span>      <span class="no">rsp</span><span class="p">,</span><span class="no">buff2</span> <span class="err">+</span> <span class="no">n</span><span class="p">*</span><span class="mi">8</span> <span class="err">+</span> <span class="mi">8</span>
     <span class="nf">mov</span>      <span class="no">rbp</span><span class="p">,</span><span class="no">buff1</span> <span class="err">+</span> <span class="no">n</span><span class="p">*</span><span class="mi">8</span>
     <span class="nf">enter</span>    <span class="mi">0</span><span class="p">,</span><span class="no">n</span><span class="err">+</span><span class="mi">1</span>
-</pre></div>
-
+</code></pre></div>
 
 <p>Copies <code>buff1</code> to <code>buff2</code>. The extra <code>+1</code> and <code>+8</code> take care of the side effects of <code>enter</code>, such as the extra values added before and after the buffer.</p>
 <p>Note that the <code>buff2</code> should be 16 bytes larger than <code>buff1</code>, specifically with 8 bytes of padding at the beginning and at the end to prevent OOB writes after executing the <code>enter</code> instruction.</p>
 <h3 id="snippet-0x1e">Snippet 0x1E</h3>
-<div class="codehilite"><pre><span></span>    <span class="nf">cmp</span>      <span class="no">al</span><span class="p">,</span><span class="mi">0x0a</span>
+<div class="codehilite"><pre><span></span><code>    <span class="nf">cmp</span>      <span class="no">al</span><span class="p">,</span><span class="mi">0x0a</span>
     <span class="nf">sbb</span>      <span class="no">al</span><span class="p">,</span><span class="mi">0x69</span>
     <span class="nf">das</span>
-</pre></div>
-
+</code></pre></div>
 
 <p>Maps each value in range [0x0, 0xF] stored in <code>al</code> into its hexadecimal representation, i.e. [0x30, ..., 0x39, 0x41, ..., 0x46].</p>
 <h3 id="snippet-0x1f">Snippet 0x1F</h3>
-<div class="codehilite"><pre><span></span><span class="nl">.loop:</span>
+<div class="codehilite"><pre><span></span><code><span class="nl">.loop:</span>
     <span class="nf">bsf</span>      <span class="no">rcx</span><span class="p">,</span><span class="no">rax</span>
     <span class="nf">shr</span>      <span class="no">rax</span><span class="p">,</span><span class="no">cl</span>
     <span class="nf">cmp</span>      <span class="no">rax</span><span class="p">,</span><span class="mi">1</span>
@@ -458,13 +425,12 @@ cmp(rax, rsi)
     <span class="nf">lea</span>      <span class="no">rax</span><span class="p">,[</span><span class="no">rax</span> <span class="err">+</span> <span class="mi">2</span><span class="p">*</span><span class="no">rax</span> <span class="err">+</span> <span class="mi">1</span><span class="p">]</span>
     <span class="nf">jmp</span>      <span class="no">.loop</span>
 <span class="nl">.exit_loop:</span>
-</pre></div>
-
+</code></pre></div>
 
 <p>Computes the Collatz sequence for any starting number stored in <code>rax</code>.</p>
 <p>See also: https://en.wikipedia.org/wiki/Collatz_conjecture</p>
 <h3 id="snippet-0x20">Snippet 0x20</h3>
-<div class="codehilite"><pre><span></span>    <span class="nf">mov</span>      <span class="no">rcx</span><span class="p">,</span><span class="no">rax</span>
+<div class="codehilite"><pre><span></span><code>    <span class="nf">mov</span>      <span class="no">rcx</span><span class="p">,</span><span class="no">rax</span>
     <span class="nf">shl</span>      <span class="no">rcx</span><span class="p">,</span><span class="mi">2</span>
     <span class="nf">add</span>      <span class="no">rcx</span><span class="p">,</span><span class="no">rax</span>
     <span class="nf">shl</span>      <span class="no">rcx</span><span class="p">,</span><span class="mi">3</span>
@@ -475,12 +441,11 @@ cmp(rax, rsi)
     <span class="nf">add</span>      <span class="no">rcx</span><span class="p">,</span><span class="no">rax</span>
     <span class="nf">shl</span>      <span class="no">rcx</span><span class="p">,</span><span class="mi">3</span>
     <span class="nf">add</span>      <span class="no">rcx</span><span class="p">,</span><span class="no">rax</span>
-</pre></div>
-
+</code></pre></div>
 
 <p>Computes <code>rcx := 1337 * rax</code>.</p>
 <h3 id="snippet-0x21">Snippet 0x21</h3>
-<div class="codehilite"><pre><span></span>    <span class="nf">mov</span>      <span class="no">rsi</span><span class="p">,</span><span class="no">rax</span>
+<div class="codehilite"><pre><span></span><code>    <span class="nf">mov</span>      <span class="no">rsi</span><span class="p">,</span><span class="no">rax</span>
     <span class="nf">add</span>      <span class="no">rax</span><span class="p">,</span><span class="no">rbx</span>
     <span class="nf">mov</span>      <span class="no">rdi</span><span class="p">,</span><span class="no">rdx</span>
     <span class="nf">sub</span>      <span class="no">rdx</span><span class="p">,</span><span class="no">rcx</span>
@@ -493,28 +458,27 @@ cmp(rax, rsi)
     <span class="nf">add</span>      <span class="no">rsi</span><span class="p">,</span><span class="no">rax</span>
     <span class="nf">mov</span>      <span class="no">rbx</span><span class="p">,</span><span class="no">rsi</span>
     <span class="nf">sub</span>      <span class="no">rax</span><span class="p">,</span><span class="no">rdi</span>
-</pre></div>
-
+</code></pre></div>
 
 <p>Computes the following after corresponding simplifications:</p>
-<div class="codehilite"><pre><span></span>rax := rax * rcx - rbx * rdx
+<div class="codehilite"><pre><span></span><code>rax := rax * rcx - rbx * rdx
 rbx := rax * rdx + rbx * rcx
-</pre></div>
-
+</code></pre></div>
 
 <p>This corresponds to the multiplication of two complex numbers:
 (a + bi) * (c + di) = (ac - bd) + (ad + bc)i.</p>
+<p>Note that it is using only three multiplications to calculate the four distinct
+products in the result. This is the essence of the <a href="https://en.wikipedia.org/wiki/Karatsuba_algorithm">Karatsuba Algorithm</a> for polynomial multiplication (thanks <a href="https://twitter.com/eleemosynator">@eleemosynator</a>).</p>
 <h3 id="snippet-0x22">Snippet 0x22</h3>
-<div class="codehilite"><pre><span></span>    <span class="nf">mov</span>      <span class="no">rdx</span><span class="p">,</span><span class="mi">0xaaaaaaaaaaaaaaab</span>
+<div class="codehilite"><pre><span></span><code>    <span class="nf">mov</span>      <span class="no">rdx</span><span class="p">,</span><span class="mi">0xaaaaaaaaaaaaaaab</span>
     <span class="nf">mul</span>      <span class="no">rdx</span>
     <span class="nf">shr</span>      <span class="no">rdx</span><span class="p">,</span><span class="mi">1</span>
     <span class="nf">mov</span>      <span class="no">rax</span><span class="p">,</span><span class="no">rdx</span>
-</pre></div>
-
+</code></pre></div>
 
 <p>Computes <code>rax := rax / 3</code> rounding to the closest integer.</p>
 <h3 id="snippet-0x23">Snippet 0x23</h3>
-<div class="codehilite"><pre><span></span><span class="nl">.loop:</span>
+<div class="codehilite"><pre><span></span><code><span class="nl">.loop:</span>
     <span class="nf">cmp</span>      <span class="no">rax</span><span class="p">,</span><span class="mi">5</span>
     <span class="nf">jbe</span>      <span class="no">.exit_loop</span>
     <span class="nf">mov</span>      <span class="no">rdx</span><span class="p">,</span><span class="no">rax</span>
@@ -529,12 +493,13 @@ rbx := rax * rdx + rbx * rcx
     <span class="nf">sbb</span>      <span class="no">rdx</span><span class="p">,</span><span class="no">rdx</span>
     <span class="nf">and</span>      <span class="no">rdx</span><span class="p">,</span><span class="mi">3</span>
     <span class="nf">sub</span>      <span class="no">rax</span><span class="p">,</span><span class="no">rdx</span>
-</pre></div>
-
+</code></pre></div>
 
 <p>Computes <code>rax := rax % 3</code>.</p>
+<p>Note that <em>2<sup>2k</sup> = 1 (mod 3)</em> and <em>2<sup>2k+1</sup> = 2 (mod 3)</em>. Hence, in order to calculate <code>rax % 3</code> one can sum the digits of the number written in base four (i.e. sum pairs of bits at even locations) and take the result modulo 3.</p>
+<p>There is also a cute bit of code at the end that does the final reduction modulo 3 without any branches. This trick is the base 4 equivalent of using the sum of the digits of a number in base 10 to check for divisibility by 3. Both tricks work in the same way because both 10 and 4 leave a remainder of 1 when divided by 3 (thanks <a href="https://twitter.com/eleemosynator">@eleemosynator</a>).</p>
 <h3 id="snippet-0x24">Snippet 0x24</h3>
-<div class="codehilite"><pre><span></span>    <span class="nf">mov</span>      <span class="no">rbx</span><span class="p">,</span><span class="no">rax</span>
+<div class="codehilite"><pre><span></span><code>    <span class="nf">mov</span>      <span class="no">rbx</span><span class="p">,</span><span class="no">rax</span>
     <span class="nf">mov</span>      <span class="no">rsi</span><span class="p">,</span><span class="no">rax</span>
 <span class="nl">.loop:</span>
     <span class="nf">mul</span>      <span class="no">rbx</span>
@@ -548,12 +513,25 @@ rbx := rax * rdx + rbx * rcx
     <span class="nf">cmp</span>      <span class="no">rcx</span><span class="p">,</span><span class="mi">1</span>
     <span class="nf">ja</span>       <span class="no">.loop</span>
 <span class="nl">.exit_loop:</span>
-</pre></div>
+</code></pre></div>
 
+<p>This computes the multiplicative inverse of <code>rax</code> modulo 2<sup>64</sup> using the Newton-Raphson algorithm, which we can write as follows:</p>
+<div class="codehilite"><pre><span></span><code><span class="kt">uint64_t</span> <span class="nf">multiplicative_inverse_mod_2_64</span><span class="p">(</span><span class="kt">uint64_t</span> <span class="n">x</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="kt">uint64_t</span> <span class="n">z</span> <span class="o">=</span> <span class="n">x</span><span class="p">;</span>
+    <span class="kt">uint64_t</span> <span class="n">t</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="k">do</span> <span class="p">{</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">x</span> <span class="o">*</span> <span class="n">z</span><span class="p">;</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="n">z</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span> <span class="o">-</span> <span class="n">t</span><span class="p">);</span>
+    <span class="p">}</span> <span class="k">while</span> <span class="p">(</span><span class="n">t</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">);</span>
+    <span class="k">return</span> <span class="n">z</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
 
-<p>Computes <code>rcx := rax % 2</code>.</p>
+<p>This paper has a good analysis: https://arxiv.org/pdf/1209.6626.pdf.</p>
+<p>Notice also that the loop exit condition takes advantage of the intermediate multiplication <code>x * z</code> to early out and also avoid having to maintain a separate loop counter. Also note that the loop condition is checked at the end - this trades off the cost of an extra couple of operations at the end of the algorithm against adding an extra branch in the middle of the loop which would be more expensive on modern architectures (thanks <a href="https://twitter.com/eleemosynator">@eleemosynator</a>).</p>
 <h3 id="snippet-0x25">Snippet 0x25</h3>
-<div class="codehilite"><pre><span></span>    <span class="nf">xor</span>      <span class="no">eax</span><span class="p">,</span><span class="no">eax</span>
+<div class="codehilite"><pre><span></span><code>    <span class="nf">xor</span>      <span class="no">eax</span><span class="p">,</span><span class="no">eax</span>
     <span class="nf">mov</span>      <span class="no">rcx</span><span class="p">,</span><span class="mi">1</span>
     <span class="nf">shl</span>      <span class="no">rcx</span><span class="p">,</span><span class="mi">0x20</span>
 <span class="nl">.loop:</span>
@@ -570,73 +548,68 @@ rbx := rax * rdx + rbx * rcx
     <span class="nf">cmp</span>      <span class="no">rbx</span><span class="p">,</span><span class="mi">1</span>
     <span class="nf">adc</span>      <span class="no">rax</span><span class="p">,</span><span class="mi">0</span>
     <span class="nf">loop</span>     <span class="no">.loop</span>
-</pre></div>
-
+</code></pre></div>
 
 <p>Register <code>rax</code> acts as a counter, and <code>rcx</code> loops from 0x100000000 to 0x0. Each iteration will split the <code>ecx</code> values in two 16-bit halves, <em>x</em> and <em>y</em>, and verify the following property:</p>
-<div class="codehilite"><pre><span></span>(x*x + y*y) &gt;&gt; 20 == 1
-</pre></div>
-
+<div class="codehilite"><pre><span></span><code>(x*x + y*y) &gt;&gt; 20 == 1
+</code></pre></div>
 
 <p>Since <em>x</em> and <em>y</em> are each 16-bit, <code>x*x + y*y</code> must be in range <em>[0x0, 0x1FFFC0002]</em>, thus <code>(x*x + y*y) &gt;&gt; 20</code> must be either 0 or 1. Therefore, each iteration is actually verifying that: <code>x*x + y*y &gt;= 0x100000000</code>. This is equivalent to <em>x^2 + y^2 &gt;= 0x10000^2</em>.</p>
 <p>Since <em>(x,y)</em> iterate each in range <em>[0x0000, 0xFFFF]</em> as <code>rcx</code> decreases. The value stored in <code>rax</code> after the snippet has been executed will be the number of points in <em>[0, 65535]^2</em> lying outside the circumference of radius 65536 centered at the origin.</p>
 <p>This ratio of points will be <em>1 - pi/4</em>, yielding an expected value of <code>rax := 0x100000000 * (1 - pi/4)</code>.</p>
 <h3 id="snippet-0x26">Snippet 0x26</h3>
-<div class="codehilite"><pre><span></span>    <span class="nf">mov</span>      <span class="no">rdx</span><span class="p">,</span><span class="no">rax</span>
+<div class="codehilite"><pre><span></span><code>    <span class="nf">mov</span>      <span class="no">rdx</span><span class="p">,</span><span class="no">rax</span>
     <span class="nf">shr</span>      <span class="no">rax</span><span class="p">,</span><span class="mi">7</span>
     <span class="nf">shl</span>      <span class="no">rdx</span><span class="p">,</span><span class="mi">0x39</span>
     <span class="nf">or</span>       <span class="no">rax</span><span class="p">,</span><span class="no">rdx</span>
-</pre></div>
-
+</code></pre></div>
 
 <p>Rotates the value in the <code>rax</code> register 7 bits to the right. Equivalent to <code>ror rax, 7</code>.</p>
 <h3 id="snippet-0x27">Snippet 0x27</h3>
-<div class="codehilite"><pre><span></span>    <span class="nf">mov</span>      <span class="no">ch</span><span class="p">,</span><span class="no">cl</span>
+<div class="codehilite"><pre><span></span><code>    <span class="nf">mov</span>      <span class="no">ch</span><span class="p">,</span><span class="no">cl</span>
     <span class="nf">inc</span>      <span class="no">ch</span>
     <span class="nf">shr</span>      <span class="no">ch</span><span class="p">,</span><span class="mi">1</span>
     <span class="nf">shr</span>      <span class="no">cl</span><span class="p">,</span><span class="mi">1</span>
     <span class="nf">shr</span>      <span class="no">rax</span><span class="p">,</span><span class="no">cl</span>
     <span class="nf">xchg</span>     <span class="no">ch</span><span class="p">,</span><span class="no">cl</span>
     <span class="nf">shr</span>      <span class="no">rax</span><span class="p">,</span><span class="no">cl</span>
-</pre></div>
+</code></pre></div>
 
+<p>This is <code>rax &gt;&gt; (floor(cl / 2) + floor((cl + 1) / 2))</code> which will be identical to <code>rax &gt;&gt; cl</code> when <code>cl</code> is below 64.
+Once <code>cl</code> exceeds 64, this snippet will return 0 whereas <code>rax &gt;&gt; cl</code> will return <code>rax</code> shifted right by <code>cl % 64</code>. They will
+then come back in line once <code>cl</code> exceeds 128, and then the whole process will repeat itself. Sometimes, two halves do not a whole make.</p>
+<!-- include the jittage example? -->
 
-<p>This computes: <code>rax := rax &gt;&gt; ((cl &gt;&gt; 1) + ((cl + 1) &gt;&gt; 1))</code> which is equivalent to <code>rax := rax / 2**T(cl)</code>, where <em>T(n) := n(n+1)/2</em> represents the <em>n</em>-th <a href="https://en.wikipedia.org/wiki/Triangular_number">triangular number</a>.</p>
-<p>The denominator in the expression above corresponds to the sequence <a href="https://oeis.org/A006125">A006125</a> as <code>cl</code> increases.</p>
-<p><em>TODO: Is there anything else special about this snippet?</em></p>
 <h3 id="snippet-0x28">Snippet 0x28</h3>
-<div class="codehilite"><pre><span></span>    <span class="nf">clc</span>
+<div class="codehilite"><pre><span></span><code>    <span class="nf">clc</span>
 <span class="nl">.loop:</span>
     <span class="nf">rcr</span>      <span class="no">byte</span> <span class="p">[</span><span class="no">rsi</span><span class="p">],</span><span class="mi">1</span>
     <span class="nf">inc</span>      <span class="no">rsi</span>
     <span class="nf">loop</span>     <span class="no">.loop</span>
-</pre></div>
+</code></pre></div>
 
-
-<p>Left-shifts by one an entire buffer at <code>rsi</code> with a length of <code>rcx</code> bytes. This can also be interpreted as left-shifting by one, i.e. dividing by two, an <strong>arbitrarily long</strong> big-endian <code>8*rcx</code>-bit integer at <code>rsi</code>.</p>
+<p>Right-shifts by one an entire buffer at <code>rsi</code> with a length of <code>rcx</code> bytes. This can also be interpreted as right-shifting by one, i.e. dividing by two, an <strong>arbitrarily long</strong> big-endian <code>8*rcx</code>-bit integer at <code>rsi</code>.</p>
 <h3 id="snippet-0x29">Snippet 0x29</h3>
-<div class="codehilite"><pre><span></span>    <span class="nf">lea</span>      <span class="no">rdi</span><span class="p">,[</span><span class="no">rsi</span> <span class="err">+</span> <span class="mi">3</span><span class="p">]</span>
+<div class="codehilite"><pre><span></span><code>    <span class="nf">lea</span>      <span class="no">rdi</span><span class="p">,[</span><span class="no">rsi</span> <span class="err">+</span> <span class="mi">3</span><span class="p">]</span>
     <span class="na">rep</span> <span class="nf">movsb</span>
-</pre></div>
-
+</code></pre></div>
 
 <p>Repeats the first 3 bytes at <code>rsi</code> starting from offset <code>rsi+3</code> until <code>rcx</code> bytes have been written.</p>
 <p>This could be used to fill a texture of 24-bit pixels with a constant color stored in the first pixel of the buffer. In this case, the first 3 bytes would be written, and then the snippet would be executed with <code>rcx := 3 * width * height - 3</code>.</p>
 <h3 id="snippet-0x2a">Snippet 0x2A</h3>
-<div class="codehilite"><pre><span></span>    <span class="nf">mov</span>      <span class="no">rsi</span><span class="p">,</span><span class="no">rbx</span>
+<div class="codehilite"><pre><span></span><code>    <span class="nf">mov</span>      <span class="no">rsi</span><span class="p">,</span><span class="no">rbx</span>
     <span class="nf">mov</span>      <span class="no">rdi</span><span class="p">,</span><span class="no">rbx</span>
 <span class="nl">.loop:</span>
     <span class="nf">lodsq</span>
     <span class="nf">xchg</span>     <span class="no">rax</span><span class="p">,</span><span class="no">qword</span> <span class="p">[</span><span class="no">rbx</span><span class="p">]</span>
     <span class="nf">stosq</span>
     <span class="nf">loop</span>     <span class="no">.loop</span>
-</pre></div>
-
+</code></pre></div>
 
 <p>This moves the last element of the array of <code>rcx</code> keywords pointed by <code>rbx</code> to the front.</p>
 <p>For instance, let <code>rcx :=  4</code> and <code>rbx</code> point to <em>[Q0, Q1, Q2, Q3, Q4]</em> with quadwords <em>Qi</em>. Then, after executing this snippet the contents of <code>rbx</code> will be: <em>[Q4, Q0, Q1, Q2, Q3]</em>.</p>
 <h3 id="snippet-0x2b">Snippet 0x2B</h3>
-<div class="codehilite"><pre><span></span>    <span class="nf">xor</span>      <span class="no">eax</span><span class="p">,</span><span class="no">eax</span>
+<div class="codehilite"><pre><span></span><code>    <span class="nf">xor</span>      <span class="no">eax</span><span class="p">,</span><span class="no">eax</span>
     <span class="nf">xor</span>      <span class="no">edx</span><span class="p">,</span><span class="no">edx</span>
 <span class="nl">.loop1:</span>
     <span class="nf">xlatb</span>
@@ -655,59 +628,76 @@ rbx := rax * rdx + rbx * rcx
     <span class="nf">xchg</span>     <span class="no">rax</span><span class="p">,</span><span class="no">rdx</span>
     <span class="nf">cmp</span>      <span class="no">al</span><span class="p">,</span><span class="no">dl</span>
     <span class="nf">jnz</span>      <span class="no">.loop2</span>
-</pre></div>
+</code></pre></div>
 
+<p>Cycle-finding using <a href="https://en.wikipedia.org/wiki/Cycle_detection#Floyd.27s_Tortoise_and_Hare">Floyd's Algorithm</a>.
+This snippet assumes that <code>rbx</code> points to a table of values of a function that has a single byte argument and single byte value.
+Consider the sequence <em>x<sub>n</sub>=f(x<sub>n-1</sub>)</em>. For any starting value this sequence will eventually start cycling as <em>f</em>
+only takes 256 distinct values and has no memory. 
+The first half of the snippet executes Floyd's Tortoise and Hare algorithm to find a collision point inside the cycle and the second
+part locates the head of the cycle which is the result of the snippet. To see this, assume that the sequence has a starting segment
+of length <em>l</em> followed by a cycle of length <em>n</em>. If our Tortoise and Hare collide at step <em>s</em>, then their locations within the cycle must
+be identical and we must have:</p>
+<p align="center"> <i>s - l = 2 s - l (</i>mod<i> n) => s = 0 (</i>mod<i> n)</i></p>
 
-<p>This snippet expects <code>rbx</code> pointing to a table of 256 <code>uint8_t</code> entries, each containing an index to the next element thus forming a linked list. The first loop can be represented by the following expression:</p>
-<div class="codehilite"><pre><span></span><span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
-<span class="k">while</span> <span class="p">(</span><span class="n">rbx</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">!=</span> <span class="n">rbx</span><span class="p">[</span><span class="n">rbx</span><span class="p">[</span><span class="n">i</span><span class="p">]])</span> <span class="p">{</span>
-  <span class="n">i</span> <span class="o">=</span> <span class="n">rbx</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+<p>Which implies that the Tortoise's location within the cycle is equal to <em>-l</em> modulo <em>n</em>, Hence, if we start another Tortoise from the
+initial point and have both Tortoises walk at the same rate, they will collide at the head of the cycle.</p>
+<!--
+ For example, for the function _f(x) = 5 + x<sup>2</sup>(_ mod _256)_ when starting from 0 we
+get: _0, 5, 30, 137, 86, 233, 22, 233, 22, ..._ -->
+<p>In <code>C</code> this looks like:</p>
+<div class="codehilite"><pre><span></span><code><span class="k">typedef</span> <span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">byte</span><span class="p">;</span>
+
+<span class="n">byte</span> <span class="nf">snippet_0x2b</span><span class="p">(</span><span class="n">byte</span> <span class="o">*</span><span class="n">tbl</span><span class="p">,</span> <span class="n">byte</span> <span class="n">x0</span><span class="p">)</span>   <span class="c1">// tbl in EBX, x0 is set zero</span>
+<span class="p">{</span>
+   <span class="n">byte</span> <span class="n">t</span><span class="p">,</span> <span class="n">h</span><span class="p">;</span>                         <span class="c1">// Tortoise and Hare</span>
+   <span class="n">t</span> <span class="o">=</span> <span class="n">h</span> <span class="o">=</span> <span class="n">x0</span><span class="p">;</span>
+   <span class="k">do</span> <span class="p">{</span>
+       <span class="n">t</span> <span class="o">=</span> <span class="n">tbl</span><span class="p">[</span><span class="n">t</span><span class="p">];</span>
+       <span class="n">h</span> <span class="o">=</span> <span class="n">tbl</span><span class="p">[</span><span class="n">tbl</span><span class="p">[</span><span class="n">h</span><span class="p">]];</span>
+    <span class="p">}</span> <span class="k">while</span> <span class="p">(</span><span class="n">t</span> <span class="o">!=</span> <span class="n">h</span><span class="p">);</span>
+
+    <span class="k">for</span> <span class="p">(</span><span class="n">byte</span> <span class="n">t2</span> <span class="o">=</span> <span class="n">x0</span><span class="p">;</span> <span class="n">t2</span> <span class="o">!=</span> <span class="n">t</span><span class="p">;)</span> <span class="p">{</span>
+       <span class="n">t</span>  <span class="o">=</span> <span class="n">tbl</span><span class="p">[</span><span class="n">t</span><span class="p">];</span>
+       <span class="n">t2</span> <span class="o">=</span> <span class="n">tbl</span><span class="p">[</span><span class="n">t2</span><span class="p">];</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="n">t</span><span class="p">;</span>
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
-
-<p>This will traverse the linked list and find the first entry pointing to itself. Obviously, this relies in the assumption that no table entry points to an index occurring previously in the chain as this would result in an endless loop (similar to cycles in linked lists). To prevent this scenario, this table pointed by <code>rbx</code> should have been initialized by <code>rbx[i] = i</code> for <em>i</em> in <em>[0, 255]</em>. The second loop can be represented by the following expression:</p>
-<div class="codehilite"><pre><span></span><span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
-<span class="k">while</span> <span class="p">(</span><span class="n">rbx</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">!=</span> <span class="n">rbx</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="p">{</span>
-  <span class="n">j</span> <span class="o">=</span> <span class="n">rbx</span><span class="p">[</span><span class="n">j</span><span class="p">];</span>
-<span class="p">}</span>
-</pre></div>
-
-
-<p>Since <code>i == rbx[i]</code>, this loop will necessarily terminate and the linked list will be traversed again until the last element is reached. </p>
+<p>(thanks <a href="https://twitter.com/eleemosynator">@eleemosynator</a>)</p>
 <h3 id="snippet-0x2c">Snippet 0x2C</h3>
-<div class="codehilite"><pre><span></span>    <span class="nf">mov</span>      <span class="no">qword</span> <span class="p">[</span><span class="no">rbx</span> <span class="err">+</span> <span class="mi">8</span><span class="p">*</span><span class="no">rcx</span><span class="p">],</span><span class="mi">0</span>
+<div class="codehilite"><pre><span></span><code>    <span class="nf">mov</span>      <span class="no">qword</span> <span class="p">[</span><span class="no">rbx</span> <span class="err">+</span> <span class="mi">8</span><span class="p">*</span><span class="no">rcx</span><span class="p">],</span><span class="mi">0</span>
     <span class="nf">mov</span>      <span class="no">qword</span> <span class="p">[</span><span class="no">rbx</span> <span class="err">+</span> <span class="mi">8</span><span class="p">*</span><span class="no">rdx</span><span class="p">],</span><span class="mi">1</span>
     <span class="nf">mov</span>      <span class="no">rax</span><span class="p">,</span><span class="no">qword</span> <span class="p">[</span><span class="no">rbx</span> <span class="err">+</span> <span class="mi">8</span><span class="p">*</span><span class="no">rcx</span><span class="p">]</span>
 
     <span class="nf">mov</span>      <span class="no">qword</span> <span class="p">[</span><span class="no">rbx</span><span class="p">],</span><span class="no">rsi</span>
     <span class="nf">mov</span>      <span class="no">qword</span> <span class="p">[</span><span class="no">rbx</span> <span class="err">+</span> <span class="mi">8</span><span class="p">],</span><span class="no">rdi</span>
     <span class="nf">mov</span>      <span class="no">rax</span><span class="p">,</span><span class="no">qword</span> <span class="p">[</span><span class="no">rbx</span> <span class="err">+</span> <span class="mi">8</span><span class="p">*</span><span class="no">rax</span><span class="p">]</span>
-</pre></div>
+</code></pre></div>
 
-
-<p>This will move <code>rsi</code> or <code>rdi</code> into <code>rax</code> depending on whether <code>rcx</code> and <code>rdx</code> are different or not, respectively. This is equivalent to: <code>rax := (rcx == rdx) ? rdi : rsi</code>. This assumes that all <code>rbx</code>-relative offsets point to valid memory.</p>
+<p>This will move <code>rsi</code> or <code>rdi</code> into <code>rax</code> depending on whether <code>rcx</code> and <code>rdx</code> are different or not, respectively. This is equivalent to: <code>rax := (rcx == rdx) ? rdi : rsi</code>. This assumes that all <code>rbx</code>-relative offsets point to valid memory. Effectively a comparison and conditional move implemented using just <code>mov</code> instructions.</p>
+<p>The <a href="https://github.com/xoreaxeaxeax/movfuscator">M/o/Vfuscator</a> project takes this concept to a whole new extreme and delivers a C compiler the produces binaries which only contain <code>mov</code> instructions (with a tiny amount of cheating for loops).</p>
 <h3 id="snippet-0x2d">Snippet 0x2D</h3>
-<div class="codehilite"><pre><span></span>    <span class="nf">mov</span>      <span class="no">rdx</span><span class="p">,</span><span class="no">rax</span>
+<div class="codehilite"><pre><span></span><code>    <span class="nf">mov</span>      <span class="no">rdx</span><span class="p">,</span><span class="no">rax</span>
     <span class="nf">dec</span>      <span class="no">rax</span>
     <span class="nf">and</span>      <span class="no">rax</span><span class="p">,</span><span class="no">rdx</span>
-</pre></div>
-
+</code></pre></div>
 
 <p>Determines if <code>rax</code> is a power of two by computing <code>rax := rax &amp; (rax - 1)</code>. The result will be zero if and only if <code>rax</code> is a power of two.</p>
 <h3 id="snippet-0x2e">Snippet 0x2E</h3>
-<div class="codehilite"><pre><span></span>    <span class="nf">mov</span>      <span class="no">rdx</span><span class="p">,</span><span class="no">rax</span>
+<div class="codehilite"><pre><span></span><code>    <span class="nf">mov</span>      <span class="no">rdx</span><span class="p">,</span><span class="no">rax</span>
     <span class="nf">dec</span>      <span class="no">rdx</span>
     <span class="nf">xor</span>      <span class="no">rax</span><span class="p">,</span><span class="no">rdx</span>
     <span class="nf">shr</span>      <span class="no">rax</span><span class="p">,</span><span class="mi">1</span>
     <span class="nf">cmp</span>      <span class="no">rax</span><span class="p">,</span><span class="no">rdx</span>
-</pre></div>
-
+</code></pre></div>
 
 <p>Determines if <code>rax</code> is a power of two larger than zero by comparing <code>(rax ^ (rax - 1)) &gt;&gt; 1</code> and <code>rax - 1</code>. Both values will be equal if and only if <code>rax</code> is a power of two larger than zero. Note that the case <code>rax == 0</code> will result on different values due to the right-shift operation.</p>
 <p>See also: Snippet 0x2D.</p>
 <h3 id="snippet-0x2f">Snippet 0x2F</h3>
-<div class="codehilite"><pre><span></span>    <span class="nf">xor</span>      <span class="no">eax</span><span class="p">,</span><span class="no">eax</span>
+<div class="codehilite"><pre><span></span><code>    <span class="nf">xor</span>      <span class="no">eax</span><span class="p">,</span><span class="no">eax</span>
 <span class="nl">.loop:</span>
     <span class="nf">jrcxz</span>    <span class="no">.exit_loop</span>
     <span class="nf">inc</span>      <span class="no">rax</span>
@@ -716,25 +706,23 @@ rbx := rax * rdx + rbx * rcx
     <span class="nf">and</span>      <span class="no">rcx</span><span class="p">,</span><span class="no">rdx</span>
     <span class="nf">jmp</span>      <span class="no">.loop</span>
 <span class="nl">.exit_loop:</span>
-</pre></div>
-
+</code></pre></div>
 
 <p>This snippet stores the number of <code>1</code>-bits in <code>rcx</code> into the <code>rax</code> register. This relies on the trick features in <em>Snippet 0x2D</em> to clear the rightmost <code>1</code>-bit until <code>rcx</code> is zero.</p>
 <p>See also: Snippet 0x2D.</p>
 <h3 id="snippet-0x30">Snippet 0x30</h3>
-<div class="codehilite"><pre><span></span>    <span class="nf">and</span>      <span class="no">rax</span><span class="p">,</span><span class="no">rdx</span>
+<div class="codehilite"><pre><span></span><code>    <span class="nf">and</span>      <span class="no">rax</span><span class="p">,</span><span class="no">rdx</span>
 
     <span class="nf">sub</span>      <span class="no">rax</span><span class="p">,</span><span class="no">rdx</span>
     <span class="nf">and</span>      <span class="no">rax</span><span class="p">,</span><span class="no">rdx</span>
 
     <span class="nf">dec</span>      <span class="no">rax</span>
     <span class="nf">and</span>      <span class="no">rax</span><span class="p">,</span><span class="no">rdx</span>
-</pre></div>
-
+</code></pre></div>
 
 <p>This snippet computes <code>((((rax &amp; rdx) - rdx) &amp; rdx) - 1) &amp; rdx</code>. This expression is equivalent to <code>rax &amp; rdx</code>.</p>
 <h3 id="snippet-0x31">Snippet 0x31</h3>
-<div class="codehilite"><pre><span></span>    <span class="nf">mov</span>      <span class="no">rcx</span><span class="p">,</span><span class="no">rax</span>
+<div class="codehilite"><pre><span></span><code>    <span class="nf">mov</span>      <span class="no">rcx</span><span class="p">,</span><span class="no">rax</span>
     <span class="nf">shr</span>      <span class="no">rcx</span><span class="p">,</span><span class="mi">1</span>
     <span class="nf">xor</span>      <span class="no">rcx</span><span class="p">,</span><span class="no">rax</span>
 
@@ -745,12 +733,15 @@ rbx := rax * rdx + rbx * rcx
     <span class="nf">xor</span>      <span class="no">rdx</span><span class="p">,</span><span class="no">rax</span>
 
     <span class="nf">xor</span>      <span class="no">rdx</span><span class="p">,</span><span class="no">rcx</span>
-</pre></div>
+</code></pre></div>
 
-
-<p>Finds the highest power of two dividing <code>rax + 1</code> by computing: <code>((rax &gt;&gt; 1) ^ rax) ^ (((rax + 1) &gt;&gt; 1) ^ (rax + 1))</code>. This corresponds to the sequence: <a href="https://oeis.org/A006519">A006519</a> as <code>rax</code> increases. The first terms are: 1, 2, 1, 4, 1, 2, 1, 8, 1, 2, 1, 4, ...</p>
+<p>The snippet is nicely laid out in four stanzas to give us a hint of what's going on. The first and third calculate <code>x^(x&gt;&gt;1)</code> which
+transforms an index to the corresponding <a href="https://en.wikipedia.org/wiki/Gray_code">Gray Code</a> sequence element (see also Sloane's <a href="https://oeis.org/A003188">A003188</a>). Hence the whole snippet
+will calculate the <code>xor</code> of two consecutive Gray Codes. These will differ in exactly one bit which corresponds to the highest power
+of 2 that divides <code>x+1</code> (Sloane's <a href="https://oeis.org/A006519">A006519</a>). This is also equivalent to <code>~x&amp;(x+1)</code>.</p>
+<p>(thanks <a href="https://twitter.com/eleemosynator">@eleemosynator</a>)</p>
 <h3 id="snippet-0x32">Snippet 0x32</h3>
-<div class="codehilite"><pre><span></span>    <span class="nf">mov</span>      <span class="no">rcx</span><span class="p">,</span><span class="no">rax</span>
+<div class="codehilite"><pre><span></span><code>    <span class="nf">mov</span>      <span class="no">rcx</span><span class="p">,</span><span class="no">rax</span>
 
     <span class="nf">mov</span>      <span class="no">rdx</span><span class="p">,</span><span class="no">rax</span>
     <span class="nf">shr</span>      <span class="no">rdx</span><span class="p">,</span><span class="mi">1</span>
@@ -759,12 +750,17 @@ rbx := rax * rdx + rbx * rcx
     <span class="nf">popcnt</span>   <span class="no">rax</span><span class="p">,</span><span class="no">rax</span>
     <span class="nf">xor</span>      <span class="no">rax</span><span class="p">,</span><span class="no">rcx</span>
     <span class="nf">and</span>      <span class="no">rax</span><span class="p">,</span><span class="mi">1</span>
-</pre></div>
+</code></pre></div>
 
-
-<p>This computes <code>rax := (popcnt((rax &gt;&gt; 1) ^ rax) ^ rax) &amp; 1</code> where <em>popcnt</em> computes the number of <code>1</code>-bits. This evaluates to <code>0</code> for all inital values of <code>rax</code>.</p>
+<p>The <a href="https://en.wikipedia.org/wiki/Gray_code">Gray Code</a> is at the center of this one as well. The snippet calculates <code>(popcnt(x^(x&gt;&gt;1))^x) &amp; 1</code> where <code>popcnt</code> counts
+the number of set bits in a register (population count, sometimes also referred to as weight). We can unpack this by using the
+distributive property of AND over XOR: <code>(popcnt(x^(x&gt;&gt;1))&amp;1) ^ (x&amp;1)</code>. Now the first part is just the parity of the Gray Code
+of index <code>x</code> (lowest bit of weight tells us if there are an even or odd number of set bits) and the second part is the lowest bit of
+<code>x</code> and they will always be equal. One way to see this is to think of the parity as the XOR of all the bits in an integer, hence
+in calculating the parity of <code>x^(x&gt;&gt;1)</code> every bit of <code>x</code> will appear twice except for bit 0 which is shifted off the bottom and only
+shows up once. Another way to see this is by inspecting the Gray Code inversion formula which we are about to meet in the next snippet.</p>
 <h3 id="snippet-0x33">Snippet 0x33</h3>
-<div class="codehilite"><pre><span></span>    <span class="nf">mov</span>      <span class="no">rdx</span><span class="p">,</span><span class="no">rax</span>
+<div class="codehilite"><pre><span></span><code>    <span class="nf">mov</span>      <span class="no">rdx</span><span class="p">,</span><span class="no">rax</span>
     <span class="nf">shr</span>      <span class="no">rdx</span><span class="p">,</span><span class="mi">0x1</span>
     <span class="nf">xor</span>      <span class="no">rax</span><span class="p">,</span><span class="no">rdx</span>
 
@@ -787,22 +783,20 @@ rbx := rax * rdx + rbx * rcx
     <span class="nf">mov</span>      <span class="no">rdx</span><span class="p">,</span><span class="no">rax</span>
     <span class="nf">shr</span>      <span class="no">rdx</span><span class="p">,</span><span class="mi">0x20</span>
     <span class="nf">xor</span>      <span class="no">rax</span><span class="p">,</span><span class="no">rdx</span>
-</pre></div>
+</code></pre></div>
 
-
-<p>Defines a permutation of 64-bit integers where each <code>rax</code> value is mapped into the corresponding 64-bit Grey-code. This corresponds to the sequence <a href="https://oeis.org/A006068">A006068</a> and it's computed via:</p>
-<div class="codehilite"><pre><span></span><span class="nl">rax</span> <span class="p">:</span><span class="o">=</span> <span class="p">(</span><span class="n">rax</span> <span class="o">&gt;&gt;</span> <span class="mh">0x01</span><span class="p">)</span> <span class="o">^</span> <span class="n">rax</span>
+<p>Maps a <a href="https://en.wikipedia.org/wiki/Gray_code">Gray Code</a> to its corresponding sequence number. This is the inverse operation of <code>x^(x&gt;&gt;1)</code>. See also snippet 0x31.</p>
+<div class="codehilite"><pre><span></span><code><span class="nl">rax</span> <span class="p">:</span><span class="o">=</span> <span class="p">(</span><span class="n">rax</span> <span class="o">&gt;&gt;</span> <span class="mh">0x01</span><span class="p">)</span> <span class="o">^</span> <span class="n">rax</span>
 <span class="nl">rax</span> <span class="p">:</span><span class="o">=</span> <span class="p">(</span><span class="n">rax</span> <span class="o">&gt;&gt;</span> <span class="mh">0x02</span><span class="p">)</span> <span class="o">^</span> <span class="n">rax</span>
 <span class="nl">rax</span> <span class="p">:</span><span class="o">=</span> <span class="p">(</span><span class="n">rax</span> <span class="o">&gt;&gt;</span> <span class="mh">0x04</span><span class="p">)</span> <span class="o">^</span> <span class="n">rax</span>
 <span class="nl">rax</span> <span class="p">:</span><span class="o">=</span> <span class="p">(</span><span class="n">rax</span> <span class="o">&gt;&gt;</span> <span class="mh">0x08</span><span class="p">)</span> <span class="o">^</span> <span class="n">rax</span>
 <span class="nl">rax</span> <span class="p">:</span><span class="o">=</span> <span class="p">(</span><span class="n">rax</span> <span class="o">&gt;&gt;</span> <span class="mh">0x10</span><span class="p">)</span> <span class="o">^</span> <span class="n">rax</span>
 <span class="nl">rax</span> <span class="p">:</span><span class="o">=</span> <span class="p">(</span><span class="n">rax</span> <span class="o">&gt;&gt;</span> <span class="mh">0x20</span><span class="p">)</span> <span class="o">^</span> <span class="n">rax</span>
-</pre></div>
-
+</code></pre></div>
 
 <p>See also: https://en.wikipedia.org/wiki/Gray_code</p>
 <h3 id="snippet-0x34">Snippet 0x34</h3>
-<div class="codehilite"><pre><span></span>    <span class="nf">mov</span>      <span class="no">ecx</span><span class="p">,</span><span class="no">eax</span>
+<div class="codehilite"><pre><span></span><code>    <span class="nf">mov</span>      <span class="no">ecx</span><span class="p">,</span><span class="no">eax</span>
     <span class="nf">and</span>      <span class="no">ecx</span><span class="p">,</span><span class="mi">0xffff0000</span>
     <span class="nf">shr</span>      <span class="no">ecx</span><span class="p">,</span><span class="mi">0x10</span>
     <span class="nf">and</span>      <span class="no">eax</span><span class="p">,</span><span class="mi">0x0000ffff</span>
@@ -836,12 +830,11 @@ rbx := rax * rdx + rbx * rcx
     <span class="nf">and</span>      <span class="no">eax</span><span class="p">,</span><span class="mi">0x55555555</span>
     <span class="nf">shl</span>      <span class="no">eax</span><span class="p">,</span><span class="mi">0x1</span>
     <span class="nf">or</span>       <span class="no">eax</span><span class="p">,</span><span class="no">ecx</span>
-</pre></div>
+</code></pre></div>
 
-
-<p>The snippet is made of five blocks, each aggregating and adding pairs of consecutive ranges of adjacent bits from the <code>rax</code> register. The size of this ranges in each block are respectively: 1, 2, 4, 8 and 16 bits.</p>
+<p><a href="https://en.wikipedia.org/wiki/Bit-reversal_permutation">Bit Reversal Permutation</a> - the cornerstone of <a href="https://en.wikipedia.org/wiki/Cooley%E2%80%93Tukey_FFT_algorithm">FFT</a> algorithms. From the <a href="https://graphics.stanford.edu/~seander/bithacks.html">Bithacks</a> page: https://graphics.stanford.edu/~seander/bithacks.html#ReverseParallel.</p>
 <h3 id="snippet-0x35">Snippet 0x35</h3>
-<div class="codehilite"><pre><span></span>    <span class="nf">mov</span>      <span class="no">edx</span><span class="p">,</span><span class="no">eax</span>
+<div class="codehilite"><pre><span></span><code>    <span class="nf">mov</span>      <span class="no">edx</span><span class="p">,</span><span class="no">eax</span>
     <span class="nf">and</span>      <span class="no">eax</span><span class="p">,</span><span class="mi">0x55555555</span>
     <span class="nf">shr</span>      <span class="no">edx</span><span class="p">,</span><span class="mi">0x1</span>
     <span class="nf">and</span>      <span class="no">edx</span><span class="p">,</span><span class="mi">0x55555555</span>
@@ -870,13 +863,12 @@ rbx := rax * rdx + rbx * rcx
     <span class="nf">shr</span>      <span class="no">edx</span><span class="p">,</span><span class="mi">0x10</span>
     <span class="nf">and</span>      <span class="no">edx</span><span class="p">,</span><span class="mi">0x0000ffff</span>
     <span class="nf">add</span>      <span class="no">eax</span><span class="p">,</span><span class="no">edx</span>
-</pre></div>
+</code></pre></div>
 
-
-<p>The snippet is made of five blocks, each aggregating and adding pairs of consecutive ranges of adjacent bits from the <code>rax</code> register. The size of this ranges in each block are respectively: 1, 2, 4, 8 and 16 bits.</p>
-<p>See also: Snippet 0x34.</p>
+<p>The basic Population Count algorithm (count the number of set bits in an word). There is a marginally better implementation on the
+<a href="https://graphics.stanford.edu/~seander/bithacks.html">Bithacks</a> page that uses a cheeky subtraction step at the start and fewer ANDs: https://graphics.stanford.edu/~seander/bithacks.html#CountBitsSetParallel</p>
 <h3 id="snippet-0x36">Snippet 0x36</h3>
-<div class="codehilite"><pre><span></span>    <span class="nf">dec</span>      <span class="no">rax</span>
+<div class="codehilite"><pre><span></span><code>    <span class="nf">dec</span>      <span class="no">rax</span>
 
     <span class="nf">mov</span>      <span class="no">rdx</span><span class="p">,</span><span class="no">rax</span>
     <span class="nf">shr</span>      <span class="no">rdx</span><span class="p">,</span><span class="mi">0x1</span>
@@ -903,41 +895,24 @@ rbx := rax * rdx + rbx * rcx
     <span class="nf">or</span>       <span class="no">rax</span><span class="p">,</span><span class="no">rdx</span>
 
     <span class="nf">inc</span>      <span class="no">rax</span>
-</pre></div>
-
+</code></pre></div>
 
 <p>Maps positive values in <code>rax</code> to their next power of two, or itself if already a power of two. Non-positive values get mapped to 0.</p>
 <p>This works by decreasing the number and replicating the most-significant non-zero bits to all their relatively least-significant bits, resulting in a value of the form <em>2^N - 1</em>. Finally, the number is incremented to obtain the desired power of two.</p>
 <h3 id="snippet-0x37">Snippet 0x37</h3>
-<div class="codehilite"><pre><span></span>    <span class="nf">mov</span>      <span class="no">rdx</span><span class="p">,</span><span class="no">rax</span>
+<div class="codehilite"><pre><span></span><code>    <span class="nf">mov</span>      <span class="no">rdx</span><span class="p">,</span><span class="no">rax</span>
     <span class="nf">not</span>      <span class="no">rdx</span>
     <span class="nf">mov</span>      <span class="no">rcx</span><span class="p">,</span><span class="mi">0x8080808080808080</span>
     <span class="nf">and</span>      <span class="no">rdx</span><span class="p">,</span><span class="no">rcx</span>
     <span class="nf">mov</span>      <span class="no">rcx</span><span class="p">,</span><span class="mi">0x0101010101010101</span>
     <span class="nf">sub</span>      <span class="no">rax</span><span class="p">,</span><span class="no">rcx</span>
     <span class="nf">and</span>      <span class="no">rax</span><span class="p">,</span><span class="no">rdx</span>
-</pre></div>
+</code></pre></div>
 
-
-<p>The goal seems to be replacing each byte in the <code>rax</code> register with 0x00 if non-zero, or with 0x80 if zero. For instance:</p>
-<div class="codehilite"><pre><span></span>0102030400000000 =&gt; 8080808000000000
-0500060007000800 =&gt; 8000800080008000
-0000FFFE00000102 =&gt; 0000808000008080
-...
-</pre></div>
-
-
-<p>However, 0x01 bytes followed exclusively by 0x00 or 0x01 bytes to their right are an exception and will be replaced with 0x80 as well, since substracting both the carried bit and the 0x01 byte will turn them into a negative byte. For instance:</p>
-<div class="codehilite"><pre><span></span>0100000000000000 =&gt; 8080808080808080
-0101000000000000 =&gt; 8080808080808080
-FF01010000000000 =&gt; 0080808080808080
-...
-</pre></div>
-
-
-<p><em>TODO: It's not clear whether this is a bug, or a feature.</em></p>
+<p>Another one from <a href="https://graphics.stanford.edu/~seander/bithacks.html">Bithacks</a>: <a href="https://graphics.stanford.edu/~seander/bithacks.html#ZeroInWord">Determine if a word has a zero byte</a>.
+Allows one to scan for the location of a zero (ASCIIZ terminator for example) by loading one machine word at a time.</p>
 <h3 id="snippet-0x38">Snippet 0x38</h3>
-<div class="codehilite"><pre><span></span>    <span class="nf">bsf</span>      <span class="no">rcx</span><span class="p">,</span><span class="no">rax</span>
+<div class="codehilite"><pre><span></span><code>    <span class="nf">bsf</span>      <span class="no">rcx</span><span class="p">,</span><span class="no">rax</span>
 
     <span class="nf">mov</span>      <span class="no">rdx</span><span class="p">,</span><span class="no">rax</span>
     <span class="nf">dec</span>      <span class="no">rdx</span>
@@ -956,21 +931,63 @@ FF01010000000000 =&gt; 0080808080808080
     <span class="nf">shr</span>      <span class="no">rdx</span><span class="p">,</span><span class="mi">1</span>
 
     <span class="nf">or</span>       <span class="no">rax</span><span class="p">,</span><span class="no">rdx</span>
-</pre></div>
+</code></pre></div>
 
+<p>This little gem calculates the next biggest integer with the same weight (number of set bits). For example, it produces
+the following sequences (feeding it its previous output every step):</p>
+<ul>
+<li>1, 2, 4, 8, 16, 32, ... (powers of 2 are the weight-1 sequence)</li>
+<li>0b11, 0b101, 0b110, 0b1001, 0b1010, 0b1100, ...</li>
+<li>0b111, 0b1011, 0b1101, 0b1110, 0b10011, ...</li>
+</ul>
+<p>Try it in python:</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># Snippet 0x38 - Calculate the successor of same weight</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">print_function</span>
 
-<p><em>TODO: No idea about this one.</em></p>
+<span class="k">def</span> <span class="nf">bsf</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">while</span> <span class="ow">not</span> <span class="p">(</span><span class="n">x</span> <span class="o">&amp;</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="n">x</span> <span class="o">&gt;&gt;=</span> <span class="mi">1</span>
+        <span class="n">n</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="n">n</span>
+
+<span class="k">def</span> <span class="nf">popcount</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">while</span> <span class="n">x</span><span class="p">:</span>
+        <span class="n">n</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">x</span> <span class="o">&amp;=</span> <span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>    <span class="c1"># Clear the bottom-most set bit - c.f. snippet 0x2f</span>
+    <span class="k">return</span> <span class="n">n</span>
+
+<span class="k">def</span> <span class="nf">next_in_weight_class</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="n">l</span> <span class="o">=</span> <span class="n">bsf</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">x</span> <span class="o">|</span> <span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">d</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="p">(</span><span class="n">d</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">d</span>
+    <span class="n">x</span> <span class="o">|=</span> <span class="p">(</span><span class="n">d</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">&gt;&gt;</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">l</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">x</span>
+
+<span class="k">def</span> <span class="nf">show_sequence</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">popcount</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="nb">bin</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">next_in_weight_class</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+<span class="c1"># Show first few weight classes</span>
+
+<span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">5</span><span class="p">):</span>
+    <span class="n">show_sequence</span><span class="p">((</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="n">w</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>   <span class="c1"># First element of a weight class w repunit(w) = 2^w - 1</span>
+</code></pre></div>
+
+<p>(thanks <a href="https://twitter.com/eleemosynator">@eleemosynator</a>)</p>
 <h3 id="snippet-0x39">Snippet 0x39</h3>
-<div class="codehilite"><pre><span></span>    <span class="nf">mov</span>      <span class="no">rdx</span><span class="p">,</span><span class="mi">0xaaaaaaaaaaaaaaaa</span>
+<div class="codehilite"><pre><span></span><code>    <span class="nf">mov</span>      <span class="no">rdx</span><span class="p">,</span><span class="mi">0xaaaaaaaaaaaaaaaa</span>
     <span class="nf">add</span>      <span class="no">rax</span><span class="p">,</span><span class="no">rdx</span>
     <span class="nf">xor</span>      <span class="no">rax</span><span class="p">,</span><span class="no">rdx</span>
-</pre></div>
-
+</code></pre></div>
 
 <p>Computes the negabinary representation of <code>rax</code>.</p>
 <p>Instead of having the binary basis <em>(+1, +2, +4, +8, +16, +32, ...)</em>, negabinary numbers have the basis <em>(+1, -2, +4, -8, +16, -32, ...)</em>. For instance, the number <em>3</em> (i.e. 0b11) gets mapped into 0b111 (i.e. 7) since <em>3 = 4 - 2 + 1</em>.</p>
 <h3 id="snippet-0x3a">Snippet 0x3A</h3>
-<div class="codehilite"><pre><span></span>    <span class="nf">mov</span>      <span class="no">rdx</span><span class="p">,</span><span class="no">rax</span>
+<div class="codehilite"><pre><span></span><code>    <span class="nf">mov</span>      <span class="no">rdx</span><span class="p">,</span><span class="no">rax</span>
     <span class="nf">neg</span>      <span class="no">rdx</span>
     <span class="nf">and</span>      <span class="no">rax</span><span class="p">,</span><span class="no">rdx</span>
 
@@ -979,32 +996,34 @@ FF01010000000000 =&gt; 0080808080808080
     <span class="nf">shr</span>      <span class="no">rax</span><span class="p">,</span><span class="mi">0x3a</span>
 
     <span class="nf">xlatb</span>
-</pre></div>
-
+</code></pre></div>
 
 <p>This snippet computes the amount of (left-most) leading zeros via De Bruijn sequences.</p>
 <p>The first block determines the highest power of two dividing <code>rax</code> by computing <code>rax := rax &amp; (-rax)</code>. This results in the sequence <a href="https://oeis.org/A006519">A006519</a> whose first elements are: 0, 1, 2, 1, 4, 1, 2, 1, 8, ...</p>
 <p>The second block together with the <code>xlatb</code> instruction computes <code>rax := rbx[(rax * 218A392CD3D5DBF) &gt;&gt; 58]</code> where <code>rbx</code> points to a De Bruijn table with 64 entries. This is equivalent to computing the binary logarithm of the previous 64-bit integer.</p>
 <p>See also: http://supertech.csail.mit.edu/papers/debruijn.pdf</p>
 <h3 id="snippet-0x3b">Snippet 0x3B</h3>
-<div class="codehilite"><pre><span></span>    <span class="nf">cdq</span>
+<div class="codehilite"><pre><span></span><code>    <span class="nf">cdq</span>
     <span class="nf">shl</span>      <span class="no">eax</span><span class="p">,</span><span class="mi">1</span>
     <span class="nf">and</span>      <span class="no">edx</span><span class="p">,</span><span class="mi">0xc0000401</span>
     <span class="nf">xor</span>      <span class="no">eax</span><span class="p">,</span><span class="no">edx</span>
-</pre></div>
-
+</code></pre></div>
 
 <p>This snippet computes:</p>
-<div class="codehilite"><pre><span></span><span class="k">if</span> <span class="p">(</span><span class="n">eax</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span>
-    <span class="n">eax</span> <span class="o">=</span> <span class="p">(</span><span class="n">eax</span> <span class="o">*</span> <span class="mi">2</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><code><span class="k">if</span> <span class="p">(</span><span class="n">eax</span> <span class="o">&amp;</span> <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">31</span><span class="p">))</span>
+    <span class="n">eax</span> <span class="o">=</span> <span class="p">(</span><span class="n">eax</span> <span class="o">&lt;&lt;</span> <span class="mi">1</span><span class="p">)</span> <span class="o">^</span> <span class="mh">0xC0000401</span>
 <span class="k">else</span>
-    <span class="n">eax</span> <span class="o">=</span> <span class="p">(</span><span class="n">eax</span> <span class="o">*</span> <span class="mi">2</span><span class="p">)</span> <span class="o">^</span> <span class="mh">0xC0000401</span>
-</pre></div>
+    <span class="n">eax</span> <span class="o">&lt;&lt;=</span> <span class="mi">1</span><span class="p">;</span>
+</code></pre></div>
 
-
-<p><em>TODO: Is there anything else special about this snippet?</em></p>
+<p>This snippet calculates the next state of a <a href="https://en.wikipedia.org/wiki/Linear-feedback_shift_register">Galois LFSR</a> with characteristic polynomial <code>0x1C000401</code>
+<em>(x<sup>32</sup> + x<sup>31</sup> + x<sup>30</sup> + x<sup>10</sup> + 1)</em>. As this polynomial is primitive, the LFSR will cycle
+through all non-zero 32-bit integers. It also uses the <code>cdq</code> trick to expand the top bit into a mask which it then ands with the polynomial constant in order to avoid using a branch.</p>
+<p>(thanks <a href="https://twitter.com/eleemosynator">@eleemosynator</a>)</p>
+<p>Common in pseudo-random number generators and guarantees a period of 2<sup>32</sup>&minus;1. Several coefficients satisfy this property, though their number of terms in thir characteristic polynomial may vary. Similarly, coefficients for generators of period 2<sup>64</sup>&minus;1 exist as well. Libraries such as <a href="https://skanthak.homepage.t-online.de/nomsvcrt.html">NoMSVCRT</a> rely on this pattern, see <code>cntr32</code> and <code>cntr64</code>.</p>
+<p>(thanks <a href="https://github.com/DamianFekete">@DamianFekete</a>)</p>
 <h3 id="snippet-0x3c">Snippet 0x3C</h3>
-<div class="codehilite"><pre><span></span>    <span class="nf">mov</span>      <span class="no">rbx</span><span class="p">,</span><span class="no">rax</span>
+<div class="codehilite"><pre><span></span><code>    <span class="nf">mov</span>      <span class="no">rbx</span><span class="p">,</span><span class="no">rax</span>
     <span class="nf">mov</span>      <span class="no">rdx</span><span class="p">,</span><span class="no">rbx</span>
     <span class="nf">mov</span>      <span class="no">rcx</span><span class="p">,</span><span class="mi">0xaaaaaaaaaaaaaaaa</span>
     <span class="nf">and</span>      <span class="no">rbx</span><span class="p">,</span><span class="no">rcx</span>
@@ -1027,12 +1046,19 @@ FF01010000000000 =&gt; 0080808080808080
     <span class="nf">dec</span>      <span class="no">rax</span>
     <span class="nf">neg</span>      <span class="no">rax</span>
     <span class="nf">sub</span>      <span class="no">rdx</span><span class="p">,</span><span class="no">rbx</span>
-</pre></div>
+</code></pre></div>
 
+<p>This snippet expects a number in <code>rax</code> and returns two outputs which are -1, 1 or 0 in <code>rax</code> and <code>rdx</code>. If we interpret the input as a sequence number and the outputs as steps in two dimensions (i.e. <em>dx</em> and <em>dy</em>) we can draw the result: </p>
+<p align="center">
+    <img src="xorpd_0x3c_hilbert.png" width="512"/>
+</p>
 
-<p><em>TODO: No idea about this one.</em></p>
+<p>This truly mind-blowing snippet draws a <a href="https://en.wikipedia.org/wiki/Hilbert_curve">Hilbert Curve</a> in 21 assembly instructions without using recursion or branches. You can experiment with the Python implementation of the algorithm in <a href="./xorpd_0x3c_hilbert.py">xorpd_0x3c_hilbert.py</a> (requires <a href="https://pillow.readthedocs.io/en/stable/">Pillow</a>).</p>
+<!-- TODO: Write an explanation of why this works -->
+
+<p>(thanks <a href="https://twitter.com/eleemosynator">@eleemosynator</a>)</p>
 <h3 id="snippet-0x3d">Snippet 0x3D</h3>
-<div class="codehilite"><pre><span></span>    <span class="nf">mov</span>      <span class="no">rcx</span><span class="p">,</span><span class="mi">1</span>
+<div class="codehilite"><pre><span></span><code>    <span class="nf">mov</span>      <span class="no">rcx</span><span class="p">,</span><span class="mi">1</span>
 <span class="nl">.loop:</span>
     <span class="nf">xor</span>      <span class="no">rax</span><span class="p">,</span><span class="no">rcx</span>
     <span class="nf">not</span>      <span class="no">rax</span>
@@ -1046,23 +1072,42 @@ FF01010000000000 =&gt; 0080808080808080
 
     <span class="nf">shl</span>      <span class="no">rcx</span><span class="p">,</span><span class="mi">1</span>
     <span class="nf">jnz</span>      <span class="no">.loop</span>
-</pre></div>
+</code></pre></div>
 
+<p>The registers <code>rax</code> and <code>rdx</code> serve both as inputs and outputs of this snippet. Starting it at (0, 0) and treating the results as points in the 2D plane, we get the following pattern:</p>
+<p align="center">
+    <img src="xorpd_0x3d_morton.png"/>
+</p>
 
-<p><em>TODO: No idea about this one.</em></p>
+<p>This is the <a href="https://en.wikipedia.org/wiki/Z-order_curve">Morton Curve</a> or <em>Z-order curve</em>. It's based around the idea of visiting all points on the 2D plane in a hierarchical nearest-neighbour Z-pattern. To understand the generation algorithm consider the following method for incrementing an integer with <em>N</em> bits:</p>
+<ul>
+<li>For <em>k</em> in [0, <em>N</em>-1]:</li>
+<li>Flip bit <em>k</em> of the integer</li>
+<li>If the bit transitioned from 0 to 1 then STOP</li>
+</ul>
+<p>The loop in the algorithm above tracks the propagation of the carry with the loop exiting when it finds a 0 bit that can finally absorb the carry by turning into a 1. Expressed in the same language, the algorithm in the snippet does the following (naming the inputs <em>x</em> and <em>y</em>):</p>
+<ul>
+<li>For <em>k</em> in [0, <em>N</em>-1]:</li>
+<li>Flip bit <em>k</em> of <em>x</em></li>
+<li>If the bit transitioned from 0 to 1 then STOP</li>
+<li>Flip bit <em>k</em> of <em>y</em></li>
+<li>If the bit transitioned from 0 to 1 then STOP</li>
+</ul>
+<p>We have exactly the same carry-propagation structure except that the carry propagates from bit <em>k</em> of <em>x</em> to bit <em>k</em> of <em>y</em> before moving up to bit <em>k+1</em> of <em>x</em>. This operation is exactly equivalent to incrementing an integer that is constructed by interleaving the bits of <em>x</em> and <em>y</em>, with the bits of <em>x</em> taking the even positions and the bits of <em>y</em> on the odd positions.</p>
+<p>Both the snippet version and the interleaved increment version of the algorithm are implemented in the Python script <a href="./xorpd_0x3d_morton.py">xorpd_0x3d_morton.py</a> (requires <a href="https://pillow.readthedocs.io/en/stable/">Pillow</a>).</p>
+<p>(thanks <a href="https://twitter.com/eleemosynator">@eleemosynator</a>)</p>
 <h3 id="snippet-0x3e">Snippet 0x3E</h3>
-<div class="codehilite"><pre><span></span>    <span class="nf">mov</span>      <span class="no">rdx</span><span class="p">,</span><span class="no">rax</span>
+<div class="codehilite"><pre><span></span><code>    <span class="nf">mov</span>      <span class="no">rdx</span><span class="p">,</span><span class="no">rax</span>
     <span class="nf">shr</span>      <span class="no">rdx</span><span class="p">,</span><span class="mi">1</span>
     <span class="nf">xor</span>      <span class="no">rax</span><span class="p">,</span><span class="no">rdx</span>
 
     <span class="nf">popcnt</span>   <span class="no">rax</span><span class="p">,</span><span class="no">rax</span>
     <span class="nf">and</span>      <span class="no">rax</span><span class="p">,</span><span class="mi">0x3</span>
-</pre></div>
-
+</code></pre></div>
 
 <p>Computes the direction of the lines in the (Heighway) Dragon Curve by computing <code>popcnt(rax ^ (rax &gt;&gt; 1)) &amp; 3</code>. This produces the sequence <a href="https://oeis.org/A246960">A246960</a>, the fixed point of the morphism <em>{0 -&gt; (0,1), 1 -&gt; (2,1), 2 -&gt; (2,3), 3 -&gt; (0,3)}</em>.</p>
 <h3 id="snippet-0x3f">Snippet 0x3F</h3>
-<div class="codehilite"><pre><span></span>    <span class="nf">mov</span>      <span class="no">rbx</span><span class="p">,</span><span class="mi">3</span>
+<div class="codehilite"><pre><span></span><code>    <span class="nf">mov</span>      <span class="no">rbx</span><span class="p">,</span><span class="mi">3</span>
     <span class="nf">mov</span>      <span class="no">r8</span><span class="p">,</span><span class="no">rax</span>
     <span class="nf">mov</span>      <span class="no">rcx</span><span class="p">,</span><span class="no">rax</span>
     <span class="nf">dec</span>      <span class="no">rcx</span>
@@ -1082,18 +1127,20 @@ FF01010000000000 =&gt; 0080808080808080
     <span class="nf">and</span>      <span class="no">rdi</span><span class="p">,</span><span class="no">rdx</span>
 
     <span class="nf">bsf</span>      <span class="no">rax</span><span class="p">,</span><span class="no">r8</span>
-</pre></div>
+</code></pre></div>
 
+<p>This snippet takes a counter as input in <code>rax</code> and return two numbers between 0 and 2 in <code>rsi</code> and <code>rdi</code> and a number between 0 and 63
+in <code>rax</code>. The use of <code>rsi</code> and <code>rdi</code> is probably a hint as they are the source index and destination index registers indicating that
+something is to be moved from one position to another. If we draw the outputs for successive values of <code>rax</code> we get:</p>
+<p align="center">
+    <img src="xorpd_0x3f_hanoi.png"/>
+</p>
 
-<p>This snippet computes:</p>
-<div class="codehilite"><pre><span></span>rsi = ((rax &amp; (rax - 1)) % 3)
-rdx = ((rax | (rax - 1)) % 3) + 1
-rdi = (rdx == 3) ? 0 : rdx;
-rax = bsf(rax)
-</pre></div>
-
-
-<p><em>TODO: No idea about this one.</em></p>
+<p>This sequence is the solution to the <a href="https://en.wikipedia.org/wiki/Tower_of_Hanoi">Towers of Hanoi</a>, and the snippet above implements its <a href="https://en.wikipedia.org/wiki/Tower_of_Hanoi#Binary_solution">binary solution</a>.</p>
+<p>According to the legend, there is a hidden monastery in Hanoi which contains a large room with three time-worn posts and 64 golden disks. The monks, all sworn to secrecy, have been following rules of the <em>Towers of Hanoi</em> and moving the disks one at a time from peg to peg. It is said that when they have completed the sequence and all 64 golden disks are the middle peg then the universe will finally come to an end.</p>
+<p>How appropriate then that the 64th and last snippet in the book solves a 64-disk Hanoi puzzle which once completed will signal the end of the universe. However there is one strange quirk - the third stanza that calculates the destination peg does something like <code>(((m | m - 1) + 1) % 3 + 1) % 3</code> where the second reduction modulo 3 is done using the <code>cmp/sbb/and</code> pattern. Why not just increment <code>m | m - 1</code> before the first reduction? It turns out that doing so would give the wrong destination for several of the end-game moves as <code>m | m - 1</code> would become 2<sup>64</sup>-1 and hence increment to zero instead of the intended 1.</p>
+<p>The monks of Hanoi need not worry, if they follow the instructions of this snippet the universe will come to an orderly end as originally intended.</p>
+<p>(thanks <a href="https://twitter.com/eleemosynator">@eleemosynator</a>)</p>
         </article>
         <hr>
         <footer>

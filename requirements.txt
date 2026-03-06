@@ -1,2 +1,2 @@
-markdown==3.3.3
+markdown==3.8.1
 pygments==2.15.0

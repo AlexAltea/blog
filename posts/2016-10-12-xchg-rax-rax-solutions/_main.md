@@ -2,7 +2,7 @@
 layout: post
 date: 2016-10-12
 title: Solutions of xchg rax,rax
-author: Alexandro Sanchez
+author: Alexandro Sanchez Bach
 ---
 
 ## Introduction

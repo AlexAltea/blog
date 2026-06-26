@@ -2,7 +2,7 @@
 layout: live
 date: 2016-08-22
 title: Observations
-author: Alexandro Sanchez
+author: Alexandro Sanchez Bach
 ---
 
 Random observations, questions, and interesting facts that caught my attention. If you can expand or answer any of these, please feel free to contact me.

@@ -2,7 +2,7 @@
 layout: post
 date: 2018-04-18
 title: LLE vs HLE and their tradeoffs
-author: Alexandro Sanchez
+author: Alexandro Sanchez Bach
 ---
 
 ## Introduction

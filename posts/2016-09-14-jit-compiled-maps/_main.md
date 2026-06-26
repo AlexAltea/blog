@@ -2,7 +2,7 @@
 layout: post
 date: 2016-09-07
 title: Fast lookups in JIT-compiled maps
-author: Alexandro Sanchez
+author: Alexandro Sanchez Bach
 ---
 
 This post shows a way of optimizing lookup performance in maps associating integer keys to arbitrary data.

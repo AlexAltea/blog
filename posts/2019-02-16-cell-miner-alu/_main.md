@@ -2,7 +2,7 @@
 layout: post
 date: 2019-02-16
 title: PS3/Cell Cryptomining: Wide arithmetic on SPUs
-author: Alexandro Sanchez
+author: Alexandro Sanchez Bach
 ---
 
 [TOC]

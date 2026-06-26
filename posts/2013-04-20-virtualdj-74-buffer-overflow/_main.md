@@ -2,7 +2,7 @@
 layout: post
 date: 2013-04-20
 title: VirtualDJ Pro/Home 7.4: Buffer Overflow
-author: Alexandro Sanchez
+author: Alexandro Sanchez Bach
 ---
 
 I have found a buffer overflow vulnerability in [VirtualDJ Pro 7.4 and VirtualDJ Home 7.4](http://www.virtualdj.com/) and possibly previous versions of this software. After right-clicking a file and entering the "_File Infos_" > "_Cover..._" menu, VirtualDJ tries to find a cover for the given file on Google Images and stores the request URL in a buffer which looks like: `"http://images.google.com/images?q=X"` where `X` corresponds to the ID3 tag _Title_. Special characters of this tag are ignored, and any sequence of symbols (e.g. `' '`, `'-'`, `'_'`) is replaced with `'+'`. The problem is [once again](../2013-03-30-virtualdj-73-buffer-overflow/) that VirtualDJ does not check if the information stored in the ID3 tags is too big to fit in the buffer.

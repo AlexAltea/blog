@@ -2,7 +2,7 @@
 layout: live
 date: 2024-04-28
 title: Quotes
-author: Alexandro Sanchez
+author: Alexandro Sanchez Bach
 ---
 
 "Wir müssen wissen. Wir werden wissen." — David Hilbert

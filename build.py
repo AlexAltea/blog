@@ -1,7 +1,7 @@
 #!/usr/bin/env -S uv run --script
 # /// script
 # dependencies = [
-#   "markdown==3.8.1",
+#   "markdown==3.10.2",
 #   "pygments==2.20.0",
 # ]
 # ///
@@ -55,7 +55,9 @@ def build_post(path):
 
 def build_index(target):
     posts = '<thead><td><b>Date</b></td><td><b>Article</b></td></thead>'
-    for post in index[::-1]:
+    for post in sorted(index[::-1], key=lambda p: p['date']):
+        if post['layout'] == 'live':
+            continue
         link = post['link'].replace('index.html', '')
         posts += '<tr><td>%s</td><td><a href="%s">%s</a></td></tr>' % (
             post['date'], link, post['title'])

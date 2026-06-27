@@ -1,4 +1,10 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+# /// script
+# dependencies = [
+#   "markdown==3.8.1",
+#   "pygments==2.20.0",
+# ]
+# ///
 
 import os
 

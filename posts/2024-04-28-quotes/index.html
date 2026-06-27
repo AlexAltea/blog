@@ -4,7 +4,7 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Fast lookups in JIT-compiled maps</title>
+        <title>Quotes</title>
         <!-- Style -->
         <link rel="stylesheet" href="../../css/code.css">
         <link rel="stylesheet" href="../../css/markdown.css">
@@ -61,22 +61,19 @@
             <span><a href="../../">&lt; Other articles</a></span>
         </header>
         <article>
-            <h1>Fast lookups in JIT-compiled maps</h1>
+            <h1>Quotes</h1>
             <p>
                 <span 
                     class="post-key">Author</span><span
                     class="post-val">Alexandro Sanchez Bach</span>
                 <span
                     class="post-key">Date</span><span
-                    class="post-val">2016-09-07</span>
+                    class="post-val">2024-04-28</span>
             </p>
-            <p>This post shows a way of optimizing lookup performance in maps associating integer keys to arbitrary data.</p>
-<h2 id="background">Background</h2>
-<p>Some time ago, I reimplemented the <a href="https://en.wikipedia.org/wiki/RSX_%27Reality_Synthesizer%27">RSX GPU</a> command processor in the emulator, <a href="https://github.com/AlexAltea/nucleus">Nucleus</a>. This GPU is made of several engines, each bound at a specific index (<em>0</em>-<em>7</em>) of the command processor, and each index provides a MMIO register window (<em>0x0</em>-<em>0x1FFC</em>). Commands are 16-bit bitfields containing an index (3-bit) and MMIO offset (13-bit). Recent userland drivers always bound engines to the same indices and there was a limited number valid MMIO offsets, our command processor was just a big hardcoded <em>switch-case</em> mapping commands to corresponding emulator function.</p>
-<p>However, older or custom drivers might bind engines at different indices making our compile-time <em>switch-case</em> useless. Ignoring wasted memory, a static array of 2^16 entries could be a fast solution. Nevertheless, 32-bit or 64-bit commands could have made this impossible. Since lookup times are critical, this yields the question, <strong>what's the fastest way of doing a lookup in a set of sparse commands -or sparse non-random integers- generated at runtime?</strong> Should we use huge static arrays? Should we use hash tables? Which data structure will optimize lookup time?</p>
-<p>Jitter solves this by letting the compiler decide that.</p>
-<hr>
-<p><strong>TODO: More information soon.</strong></p>
+            <p>"Wir müssen wissen. Wir werden wissen." — David Hilbert</p>
+<p>"Everyone who confuses correlation with causation eventually ends up dead." — Alan Cooper</p>
+<p>"I like offending people, because I think the people who get offended should be offended." — Linus Torvalds</p>
+<p>"The less confident you are, the more serious you have to act." — Tara Ploughman</p>
         </article>
         <hr>
         <footer>

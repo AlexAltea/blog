@@ -1,0 +1,117 @@
+<!-- This file has been auto-generated! -->
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>EU DMA complaint against Alphabet over Play Integrity</title>
+        <!-- Style -->
+        <link rel="stylesheet" href="../../css/code.css">
+        <link rel="stylesheet" href="../../css/markdown.css">
+        <style>
+            body {
+                box-sizing: border-box;
+                min-width: 200px;
+                max-width: 980px;
+                margin: 0 auto;
+                padding: 45px;
+            }
+
+            header {
+                position: relative;
+            }
+            header > .links {
+                position: absolute;
+                right: 0;
+            }
+
+            .post-key {
+                background-color: hsl(45, 67%, 80%);
+                border-radius: 5px 0px 0px 5px;
+                padding: 2px 6px 2px 8px;
+                margin: 0px;
+            }
+            .post-val {
+                background-color: hsl(45, 67%, 90%);
+                border-radius: 0px 5px 5px 0px;
+                padding: 2px 8px 2px 6px;
+                margin: 0px;
+            }
+
+            footer {
+                text-align: center;
+            }
+        
+            @media (max-width: 767px) {
+                body {
+                    padding: 15px;
+                }
+            }
+        </style>
+    </head>
+    <body class="markdown-body">
+        <header>
+            <div class="links">
+                <span>
+                    <a href="https://twitter.com/AlexAltea">Twitter</a> |
+                    <a href="https://github.com/AlexAltea">Github</a> |
+                    <a href="mailto:alexandro@phi.nz">Email</a>
+                </span>
+            </div>
+            <span><a href="../../">&lt; Other articles</a></span>
+        </header>
+        <article>
+            <h1>EU DMA complaint against Alphabet over Play Integrity</h1>
+            <p>
+                <span 
+                    class="post-key">Author</span><span
+                    class="post-val">Alexandro Sanchez Bach</span>
+                <span
+                    class="post-key">Date</span><span
+                    class="post-val">2026-06-25</span>
+            </p>
+            <p>For lack of a better place, I have posted my EU Digital Markets Act complaint against Alphabet over Play Integrity and Play Protect's unfair gatekeeping of alternative Android distributions here in my blog.</p>
+<p>This text has minor editing, mainly to remove personal information and add additional links/resources. The core facts, concerns and requested actions remain unchanged.</p>
+<p>The complaint below was submitted as an <a href="https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32022R1925#art_27">Article 27</a> third-party information report.</p>
+<hr>
+<h3 id="gatekeeper-and-services-concerned">Gatekeeper and services concerned</h3>
+<ul>
+<li>Alphabet<ul>
+<li><a href="https://digital-markets-act-cases.ec.europa.eu/cases/DMA.100002">DMA.100002</a> - Google Play ("<strong>Play</strong>")</li>
+<li><a href="https://digital-markets-act-cases.ec.europa.eu/cases/DMA.100009">DMA.100009</a> - Android Mobile ("<strong>Android</strong>")</li>
+</ul>
+</li>
+</ul>
+<h3 id="technical-and-market-context">Technical and market context</h3>
+<p>Android provides a hardware-backed device integrity attestation mechanism (informally, "<strong>Hardware Attestation API</strong>" or "<strong>Android Platform Key Attestation</strong>") which enables third parties such as app developers to obtain digitally signed evidence of selected security-relevant properties and state of a connecting device <a href="https://web.archive.org/web/20260617093031/https://developer.android.com/privacy-and-security/security-key-attestation">[1]</a>, including verified-boot keys associated with the loaded Android operating system image, and enforce access controls accordingly.</p>
+<p><em>Google Play Integrity API</em> (or "<strong>Play Integrity</strong>") is a <em>Google Play</em> service that allows app developers to "<em>check that user actions and server requests are coming from [their] genuine app, installed by Google Play, <mark>running on a genuine and certified Android device</mark></em>" <a href="https://web.archive.org/web/20260617092956/https://developer.android.com/google/play/integrity/overview">[2]</a>. Play Integrity builds on Android Platform Key Attestation signals and moves the responsibility of managing approved verified-boot keys away from app developers; in Google's words: "<em>Play Integrity API is the recommended way to benefit from hardware-backed Android platform key attestation</em>" <a href="http://web.archive.org/web/20260616005723/https://android-developers.googleblog.com/2025/10/stronger-threat-detection-simpler.html">[3]</a>.</p>
+<p>Google presents Play Integrity to app developers as part of Google Play's <em>Protected with Play</em> (or "<strong>Play Protect</strong>")  security services, alongside messaging such as "<em>Protect your app and your users</em>", "<em>Detect security threats and risky devices</em>" and "<em>core features critical to building secure apps</em>" <a href="./play_protect_developers_ex1.png">[4]</a> <a href="https://web.archive.org/web/20260621025340/https://play.google.com/console/about/app-integrity/">[5]</a> <a href="https://web.archive.org/web/20260619024311/https://developer.android.com/privacy-and-security/security-tips#app_integrity">[6]</a>.</p>
+<p>Play Integrity's device-integrity verdicts since Android 13 require, among other criteria, hardware-backed proof that the loaded Android operating system is a "<em>certified device manufacturer image</em>" <a href="https://web.archive.org/web/20260623173041/https://developer.android.com/google/play/integrity/verdicts">[7]</a>. Google refers to this broader device status as "<strong>Play Protect certified</strong>" <a href="https://web.archive.org/web/20260607171012/https://support.google.com/googleplay/answer/7165974">[8]</a>, which is available for device manufacturers, but not to third-party Android distributions made for existing supported devices <a href="https://web.archive.org/web/20260622132415/https://www.android.com/certified/">[9]</a>.</p>
+<p>Obtaining <em>Play Protect certified</em> status requires device manufacturers to pass "<strong>Android compatibility</strong>" device validation <a href="https://source.android.com/docs/compatibility/compatibility-faq">[10]</a> and to become Google Mobile Services (GMS) partners <a href="https://web.archive.org/web/20260625223004/https://www.android.com/gms/">[11]</a> <a href="https://web.archive.org/web/20260530050020/https://www.android.com/gms/contact/">[12]</a>. Such Android compatibility requires compliance with Android's <em>Compatibility Definition Document</em> (CDD) and passing the <em>Compatibility Test Suite</em> (CTS), which include both hardware and software requirements <a href="https://source.android.com/docs/compatibility/overview">[13]</a>, covering both security and non-security criteria <a href="https://source.android.com/docs/compatibility/17/android-17-cdd#9_security_model_compatibility">[14]</a>.</p>
+<h3 id="dma-concerns">DMA concerns</h3>
+<p>Alphabet operates Play Integrity in a way that gatekeeps which Android Mobile environments may access Google Play applications, while providing no fair, reasonable and non-discriminatory approval path for secure third-party Android Mobile environments. This may undermine Alphabet’s DMA obligations as gatekeeper for both Google Play and Android Mobile.</p>
+<p>In particular:</p>
+<ul>
+<li>Google's Play Protect certification path does not appear to provide a fair, reasonable, non-discriminatory process for third-party Android Mobile distributors to have their verified-boot keys recognised for existing Android devices that support alternative operating systems.</li>
+<li>As a result, secure non-Google-certified Android operating systems such as GrapheneOS can be excluded from apps and services using Play Integrity even where their supported devices meet all security requirements laid out in Android's Compatibility Test Suite.</li>
+<li>This risks misleading app developers by treating "not Google-certified" as equivalent to "not secure", while encouraging developers to use Play Integrity as a security best practice and access-control mechanism.</li>
+<li>The practical effect is that Google Play can break Android Mobile hardware-software interoperability: alternative Android operating systems cannot interoperate on equal terms with the same Android hardware-backed security features if Play Integrity refuses to recognise their verified-boot keys under objective criteria.</li>
+</ul>
+<p>This raises the following DMA concerns:</p>
+<ul>
+<li><a href="https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32022R1925#art_6"><em>Article 6(7)</em></a>: Play Integrity appears to restrict effective interoperability between Android Mobile features. Any integrity restriction should be strictly necessary, proportionate and duly justified. Refusal to recognise alternative verified-boot keys is not the least restrictive way to protect device integrity where existing Android platform key attestation can provide comparable security evidence.</li>
+<li><a href="https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32022R1925#art_13"><em>Article 13</em></a>: A technical security service such as Play Integrity should not be designed or operated in a way that undermines effective compliance with DMA obligations by making device-manufacturer status or GMS partnership the only practical route to app access under Play Integrity.</li>
+</ul>
+<h3 id="requested-action-and-possible-remedy">Requested action and possible remedy</h3>
+<p>I ask the Commission to assess whether Alphabet’s design and operation of Google Play's <em>Play Integrity API</em>, including the absence of an objective Play Protect certification process for alternative Android Mobile distributions for existing devices, undermines or circumvents Alphabet's DMA obligations in relation to Google Play and Android Mobile.</p>
+<p>A proportionate remedy would require Alphabet to provide a transparent, objective, non-discriminatory process by which alternative Android operating systems could be <em>Play Protect certified</em> (or equivalent recognition for Play Integrity verdict purposes) when they, in conjunction with an existing supported device, show compliance with <em>Android compatibility</em> requirements.</p>
+        </article>
+        <hr>
+        <footer>
+            <p>
+                Questions? Comments? <a href="https://github.com/AlexAltea/blog/issues">Open an issue!</a>
+            </p>
+            <p><a href="mailto:alexandro@phi.nz">alexandro@phi.nz</a></p>
+        </footer>
+    </body>
+</html>

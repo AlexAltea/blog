@@ -35,7 +35,6 @@ def build_post_markdown(source, target):
     content = md.convert(text)
     for k,v in md.Meta.items():
         metadata[k] = v[0]
-    index.append(metadata)
     with open('templates/post.html', 'r') as f:
         post = f.read()
         post = post.replace('$date', metadata['date'])
@@ -45,13 +44,17 @@ def build_post_markdown(source, target):
     with open(target, 'w') as f:
         f.write('<!-- This file has been auto-generated! -->\n')
         f.write(post)
+    index.append(metadata)
 
 def build_post(path):
     source = os.path.join(path, '_main.md')
     target = os.path.join(path, 'index.html')
     if os.path.isfile(source):
         print('Building: %s' % source)
-        build_post_markdown(source, target)
+        try:
+            build_post_markdown(source, target)
+        except Exception as e:
+            print('Skipping due to errors: %s (%s)' % (source, e))
 
 def build_index(target):
     posts = '<thead><td><b>Date</b></td><td><b>Article</b></td></thead>'

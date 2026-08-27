@@ -66,7 +66,3 @@ Log in with the victim's password and the 2FA code sent to attacker@evil.tld.
 ![](./screenshot_3.png)
 
 ![](./screenshot_4.png)
-
-## Suggested fix
-
-Require the account's current second factor to change the OTP recovery address, the full authentication that `saveMail` skips today. Confirming the change through a link sent to the existing recovery address would also work.

